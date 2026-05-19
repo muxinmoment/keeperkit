@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+python-dotenv
+httpx
+openai
+pytest
+
+# V1.1 candidates:
+# chromadb
+# sentence-transformers
+# langchain
+# langchain-text-splitters
+# FlagEmbedding
