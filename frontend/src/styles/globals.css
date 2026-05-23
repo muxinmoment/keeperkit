@@ -56,6 +56,12 @@ input {
   border-bottom: 1px solid rgba(216, 196, 142, 0.2);
 }
 
+.console__status {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
 .eyebrow {
   margin: 0 0 8px;
   color: #9dd6b5;
@@ -74,6 +80,16 @@ h1 {
   padding: 8px 12px;
   color: #9dd6b5;
   font-family: "Courier New", monospace;
+}
+
+.endpoint {
+  max-width: 260px;
+  overflow: hidden;
+  color: #cdbf99;
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .messages {
@@ -119,10 +135,15 @@ h1 {
 
 .prompt {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 104px;
-  gap: 12px;
+  gap: 14px;
   padding: 24px;
   border-top: 1px solid rgba(216, 196, 142, 0.2);
+}
+
+.prompt__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 104px;
+  gap: 12px;
 }
 
 .prompt input {
@@ -150,15 +171,50 @@ h1 {
   opacity: 0.68;
 }
 
+.prompt__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.prompt__controls label {
+  display: grid;
+  grid-template-columns: auto 72px;
+  align-items: center;
+  gap: 8px;
+  color: #cdbf99;
+  font-family: "Courier New", monospace;
+  font-size: 13px;
+}
+
+.prompt__controls input {
+  padding: 8px 10px;
+}
+
 .sources {
   align-self: start;
   padding: 20px;
 }
 
-.sources h2 {
-  margin: 0 0 16px;
+.sources__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.sources h2,
+.sources__header span {
+  margin: 0;
   font-size: 18px;
   color: #d8c48e;
+  font-family: "Courier New", monospace;
+}
+
+.sources__empty {
+  margin: 0;
+  color: #cdbf99;
   font-family: "Courier New", monospace;
 }
 
@@ -201,13 +257,17 @@ h1 {
   }
 
   .console__header,
-  .prompt {
+  .prompt__row {
     grid-template-columns: 1fr;
   }
 
-  .prompt {
-    display: flex;
+  .console__header {
+    align-items: flex-start;
     flex-direction: column;
+  }
+
+  .console__status {
+    justify-items: start;
   }
 
   .prompt button {

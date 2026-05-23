@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 
-import { askRules, type Source } from "../api/rules";
+import { API_BASE_URL, askRules, type Source } from "../api/rules";
 import { SourceList } from "./SourceList";
 
 type Message = {
@@ -10,6 +10,8 @@ type Message = {
 
 export function ChatPanel() {
   const [question, setQuestion] = useState("孤注一掷失败后会发生什么？");
+  const [topK, setTopK] = useState(20);
+  const [rerankTopK, setRerankTopK] = useState(5);
   const [messages, setMessages] = useState<Message[]>([]);
   const [sources, setSources] = useState<Source[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -24,10 +26,15 @@ export function ChatPanel() {
 
     setIsLoading(true);
     setError(null);
+    setSources([]);
     setMessages((current) => [...current, { role: "user", content: trimmed }]);
 
     try {
-      const response = await askRules(trimmed);
+      const response = await askRules({
+        question: trimmed,
+        top_k: topK,
+        rerank_top_k: rerankTopK
+      });
       setMessages((current) => [...current, { role: "assistant", content: response.answer }]);
       setSources(response.sources);
     } catch (requestError) {
@@ -45,7 +52,10 @@ export function ChatPanel() {
             <p className="eyebrow">KeeperKit Rules</p>
             <h1>守秘人的规则检索台</h1>
           </div>
-          <span className="status">{isLoading ? "Consulting" : "Ready"}</span>
+          <div className="console__status">
+            <span className="status">{isLoading ? "Consulting" : "Ready"}</span>
+            <span className="endpoint">{API_BASE_URL}</span>
+          </div>
         </div>
 
         <div className="messages">
@@ -65,18 +75,49 @@ export function ChatPanel() {
         </div>
 
         <form className="prompt" onSubmit={handleSubmit}>
-          <input
-            value={question}
-            onChange={(event) => setQuestion(event.target.value)}
-            placeholder="输入一个规则问题"
-          />
-          <button disabled={isLoading} type="submit">
-            Ask
-          </button>
+          <div className="prompt__row">
+            <input
+              value={question}
+              onChange={(event) => setQuestion(event.target.value)}
+              placeholder="输入一个规则问题"
+            />
+            <button disabled={isLoading} type="submit">
+              Ask
+            </button>
+          </div>
+          <div className="prompt__controls">
+            <label>
+              <span>Recall</span>
+              <input
+                max={20}
+                min={1}
+                onChange={(event) => setTopK(readBoundedNumber(event.target.valueAsNumber, 1, 20, topK))}
+                type="number"
+                value={topK}
+              />
+            </label>
+            <label>
+              <span>Rerank</span>
+              <input
+                max={10}
+                min={1}
+                onChange={(event) => setRerankTopK(readBoundedNumber(event.target.valueAsNumber, 1, 10, rerankTopK))}
+                type="number"
+                value={rerankTopK}
+              />
+            </label>
+          </div>
         </form>
       </section>
 
-      <SourceList sources={sources} />
+      <SourceList isLoading={isLoading} sources={sources} />
     </main>
   );
+}
+
+function readBoundedNumber(value: number, min: number, max: number, fallback: number): number {
+  if (Number.isNaN(value)) {
+    return fallback;
+  }
+  return Math.min(max, Math.max(min, value));
 }

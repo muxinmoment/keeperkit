@@ -14,6 +14,7 @@ Step 04：ChromaDB 入库与检索验证
 Step 05：DeepSeek Grounded Answer
 Step 06：固定评测问题集脚本
 Step 07：BGE Reranker
+Step 08：前端接入真实问答接口
 ```
 
 当前可用链路：
@@ -126,6 +127,26 @@ DeepSeek 回答能说明：
 
 ## 已知限制
 
+### 前端已接入真实问答接口
+
+当前前端会调用：
+
+```text
+POST /api/v1/rules/ask
+```
+
+默认后端地址：
+
+```text
+http://127.0.0.1:8000
+```
+
+可通过前端环境变量覆盖：
+
+```env
+VITE_API_BASE_URL=http://127.0.0.1:8000
+```
+
 ### 已有固定评测问题集
 
 当前已有固定问题集和脚本：
@@ -189,8 +210,8 @@ BAAI/bge-small-zh-v1.5
 
 优先级从高到低：
 
-1. 前端接入真实 `/api/v1/rules/ask`。
-2. 用固定评测集记录 simple 与 BGE reranker 对比结果。
+1. 用固定评测集记录 simple 与 BGE reranker 对比结果。
+2. 优化前端 sources 展示与长回答阅读体验。
 3. 优化 chunk 切分，特别是表格、怪物属性块、法术条目。
 4. 扩充评测问题集到 20 个以上。
 5. 增加 SSE 流式 LLM 输出。
