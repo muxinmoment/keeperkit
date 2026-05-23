@@ -1,5 +1,5 @@
 from app.config import settings
-from app.rag.generator import TemplateRuleGenerator
+from app.rag.generator import create_rule_generator
 from app.rag.reranker import SimpleReranker
 from app.rag.retriever import RuleRetriever
 from app.schemas.rules import RuleAskRequest, RuleAskResponse, Source
@@ -9,7 +9,7 @@ class RuleQAService:
     def __init__(self) -> None:
         self.retriever = RuleRetriever(index_dir=settings.index_dir)
         self.reranker = SimpleReranker()
-        self.generator = TemplateRuleGenerator()
+        self.generator = create_rule_generator(settings.generator_provider)
 
     def ask(self, request: RuleAskRequest) -> RuleAskResponse:
         top_k = request.top_k or settings.retrieval_top_k
