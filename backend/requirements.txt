@@ -6,6 +6,7 @@ python-dotenv
 httpx
 openai
 pytest
+pymupdf
 
 # V1.1 candidates:
 # chromadb
