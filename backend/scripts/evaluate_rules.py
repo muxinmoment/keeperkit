@@ -9,7 +9,7 @@ BACKEND_DIR = Path(__file__).resolve().parents[1]
 sys.path.append(str(BACKEND_DIR))
 
 from app.config import settings  # noqa: E402
-from app.rag.reranker import SimpleReranker  # noqa: E402
+from app.rag.reranker import Reranker, create_reranker  # noqa: E402
 from app.rag.retriever import RuleRetriever  # noqa: E402
 from app.rag.types import RetrievedChunk  # noqa: E402
 
@@ -21,7 +21,10 @@ def main() -> None:
     args = parse_args()
     cases = load_cases(args.questions_file)
     retriever = RuleRetriever(index_dir=settings.index_dir)
-    reranker = SimpleReranker()
+    reranker = create_reranker(
+        provider=settings.reranker_provider,
+        model_name=settings.reranker_model,
+    )
 
     results = [
         evaluate_case(
@@ -45,6 +48,8 @@ def main() -> None:
                     "embedding_model": settings.embedding_model,
                     "vector_store_provider": settings.vector_store_provider,
                     "chroma_collection": settings.chroma_collection,
+                    "reranker_provider": settings.reranker_provider,
+                    "reranker_model": settings.reranker_model,
                     "top_k": args.top_k,
                     "rerank_top_k": args.rerank_top_k,
                     "results": results,
@@ -112,7 +117,7 @@ def load_cases(path: Path) -> list[dict[str, Any]]:
 def evaluate_case(
     case: dict[str, Any],
     retriever: RuleRetriever,
-    reranker: SimpleReranker,
+    reranker: Reranker,
     top_k: int,
     rerank_top_k: int,
 ) -> dict[str, Any]:

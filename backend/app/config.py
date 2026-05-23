@@ -1,5 +1,5 @@
-from pathlib import Path
 import os
+from pathlib import Path
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -28,6 +28,8 @@ class Settings(BaseSettings):
 
     retrieval_top_k: int = Field(default=8, alias="RETRIEVAL_TOP_K")
     rerank_top_k: int = Field(default=3, alias="RERANK_TOP_K")
+    reranker_provider: str = Field(default="simple", alias="RERANKER_PROVIDER")
+    reranker_model: str = Field(default="BAAI/bge-reranker-v2-m3", alias="RERANKER_MODEL")
 
     embedding_provider: str = Field(default="hash", alias="EMBEDDING_PROVIDER")
     embedding_model: str = Field(default="hash-256", alias="EMBEDDING_MODEL")

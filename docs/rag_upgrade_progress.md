@@ -13,6 +13,7 @@ Step 03：ChromaDB Vector Store
 Step 04：ChromaDB 入库与检索验证
 Step 05：DeepSeek Grounded Answer
 Step 06：固定评测问题集脚本
+Step 07：BGE Reranker
 ```
 
 当前可用链路：
@@ -23,7 +24,7 @@ clean Markdown
   -> BAAI/bge-small-zh-v1.5 embedding
   -> ChromaDB persistent collection
   -> retriever top-k
-  -> SimpleReranker top-k
+  -> configurable reranker top-k
   -> DeepSeek answer
   -> sources
 ```
@@ -63,6 +64,10 @@ GENERATOR_PROVIDER=llm
 LLM_BASE_URL=https://api.deepseek.com
 LLM_API_KEY=your_key
 LLM_MODEL=deepseek-chat
+
+RERANKER_PROVIDER=simple
+# RERANKER_PROVIDER=bge
+RERANKER_MODEL=BAAI/bge-reranker-v2-m3
 ```
 
 ## 推荐启动命令
@@ -143,19 +148,22 @@ $env:CHROMA_COLLECTION = "keeperkit_coc7"
 python scripts\evaluate_rules.py --top-k 8 --rerank-top-k 3
 ```
 
-### Reranker 仍然是简单排序
+### Reranker 已可配置
 
 当前：
 
 ```text
-SimpleReranker
+RERANKER_PROVIDER=simple
 ```
 
-后续建议：
+可启用：
 
-```text
-BAAI/bge-reranker-v2-m3
+```env
+RERANKER_PROVIDER=bge
+RERANKER_MODEL=BAAI/bge-reranker-v2-m3
 ```
+
+默认仍是 `simple`，避免没有下载 reranker 模型时影响本地启动。
 
 ### 模型加载较慢
 
@@ -181,8 +189,8 @@ BAAI/bge-small-zh-v1.5
 
 优先级从高到低：
 
-1. 接入 BGE reranker。
-2. 优化 chunk 切分，特别是表格、怪物属性块、法术条目。
-3. 前端接入真实 `/api/v1/rules/ask`。
-4. 扩充评测问题集到 20 个以上，并记录 reranker 前后结果。
+1. 前端接入真实 `/api/v1/rules/ask`。
+2. 用固定评测集记录 simple 与 BGE reranker 对比结果。
+3. 优化 chunk 切分，特别是表格、怪物属性块、法术条目。
+4. 扩充评测问题集到 20 个以上。
 5. 增加 SSE 流式 LLM 输出。
