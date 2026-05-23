@@ -8,10 +8,10 @@ openai
 pytest
 pymupdf
 pymupdf4llm
+sentence-transformers
+chromadb
 
 # V1.1 candidates:
-# chromadb
-# sentence-transformers
 # langchain
 # langchain-text-splitters
 # FlagEmbedding

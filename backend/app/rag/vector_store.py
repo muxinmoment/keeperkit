@@ -2,12 +2,12 @@ import json
 import math
 from pathlib import Path
 
-from app.rag.embeddings import HashEmbeddingModel
+from app.rag.embeddings import EmbeddingModel, HashEmbeddingModel
 from app.rag.types import DocumentChunk, RetrievedChunk
 
 
 class JsonVectorStore:
-    def __init__(self, index_dir: Path, embedding_model: HashEmbeddingModel | None = None) -> None:
+    def __init__(self, index_dir: Path, embedding_model: EmbeddingModel | None = None) -> None:
         self.index_dir = index_dir
         self.index_file = index_dir / "chunks.json"
         self.embedding_model = embedding_model or HashEmbeddingModel()

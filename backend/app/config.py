@@ -27,6 +27,12 @@ class Settings(BaseSettings):
     retrieval_top_k: int = Field(default=8, alias="RETRIEVAL_TOP_K")
     rerank_top_k: int = Field(default=3, alias="RERANK_TOP_K")
 
+    embedding_provider: str = Field(default="hash", alias="EMBEDDING_PROVIDER")
+    embedding_model: str = Field(default="hash-256", alias="EMBEDDING_MODEL")
+    vector_store_provider: str = Field(default="json", alias="VECTOR_STORE_PROVIDER")
+    chroma_collection: str = Field(default="keeperkit_rules", alias="CHROMA_COLLECTION")
+
+    generator_provider: str = Field(default="template", alias="GENERATOR_PROVIDER")
     llm_base_url: str = Field(default="https://api.deepseek.com", alias="LLM_BASE_URL")
     llm_api_key: str = Field(default="replace-me", alias="LLM_API_KEY")
     llm_model: str = Field(default="deepseek-chat", alias="LLM_MODEL")
