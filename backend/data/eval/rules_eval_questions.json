@@ -1,0 +1,92 @@
+[
+  {
+    "id": "dice_bonus_penalty",
+    "question": "奖励骰和惩罚骰怎么计算？",
+    "expected_terms": ["奖励骰", "惩罚骰"],
+    "notes": "应召回技能检定或游戏系统摘要中的奖励骰与惩罚骰规则。"
+  },
+  {
+    "id": "pushed_roll_failure",
+    "question": "孤注一掷失败会发生什么？",
+    "expected_terms": ["孤注一掷"],
+    "notes": "应召回孤注一掷失败后由守秘人描述后果的规则。"
+  },
+  {
+    "id": "difficulty_success",
+    "question": "困难成功和极难成功怎么算？",
+    "expected_terms": ["困难", "极难"],
+    "notes": "应召回常规成功、困难成功、极难成功的判定等级。"
+  },
+  {
+    "id": "fumble",
+    "question": "大失败怎么判定？",
+    "expected_terms": ["大失败"],
+    "notes": "应召回检定大失败或大失败范围说明。"
+  },
+  {
+    "id": "combat_order",
+    "question": "战斗轮中角色行动顺序怎么决定？",
+    "expected_terms": ["战斗", "行动顺序"],
+    "notes": "应召回战斗轮、敏捷或行动顺序相关规则。"
+  },
+  {
+    "id": "fight_back_dodge",
+    "question": "近战中闪避和反击有什么区别？",
+    "expected_terms": ["闪避", "反击"],
+    "notes": "应召回近战防御选项中闪避和反击的差异。"
+  },
+  {
+    "id": "firearm_malfunction",
+    "question": "火器故障值是什么？",
+    "expected_terms": ["故障"],
+    "notes": "应召回火器、射击或武器表中的故障值说明。"
+  },
+  {
+    "id": "damage_bonus",
+    "question": "伤害加值怎么计算？",
+    "expected_terms": ["伤害加值"],
+    "notes": "应召回体格、力量或伤害加值表。"
+  },
+  {
+    "id": "sanity_check_failure",
+    "question": "理智检定失败后怎么处理？",
+    "expected_terms": ["理智", "失败"],
+    "notes": "应召回理智损失和疯狂判定流程。"
+  },
+  {
+    "id": "temporary_insanity",
+    "question": "临时疯狂怎么判定？",
+    "expected_terms": ["临时疯狂"],
+    "notes": "应召回一次失去 5 点或更多理智等相关规则。"
+  },
+  {
+    "id": "chase_mov",
+    "question": "追逐中 MOV 怎么影响行动？",
+    "expected_terms": ["追逐", "MOV"],
+    "notes": "应召回追逐规则中移动力和行动次数。"
+  },
+  {
+    "id": "magic_points_recovery",
+    "question": "魔法值如何恢复？",
+    "expected_terms": ["魔法值", "恢复"],
+    "notes": "应召回魔法值恢复速率或规则。"
+  },
+  {
+    "id": "mythos_tomes",
+    "question": "阅读神话典籍会发生什么？",
+    "expected_terms": ["神话", "典籍"],
+    "notes": "应召回克苏鲁神话、神话典籍或阅读收益与代价。"
+  },
+  {
+    "id": "spell_cost",
+    "question": "法术施放需要什么成本？",
+    "expected_terms": ["法术", "成本"],
+    "notes": "应召回法术施放所需魔法值、理智或其他成本。"
+  },
+  {
+    "id": "monster_armor_damage",
+    "question": "怪物的护甲和伤害如何理解？",
+    "expected_terms": ["护甲", "伤害"],
+    "notes": "应召回怪物属性、护甲或攻击伤害说明。"
+  }
+]

@@ -1,15 +1,17 @@
 from pathlib import Path
+import os
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
+ENV_FILE = None if os.getenv("KEEPERKIT_DISABLE_DOTENV") == "1" else BACKEND_DIR / ".env"
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=BACKEND_DIR / ".env",
+        env_file=ENV_FILE,
         env_file_encoding="utf-8",
         extra="ignore",
     )

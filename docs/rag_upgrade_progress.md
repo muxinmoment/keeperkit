@@ -12,6 +12,7 @@ Step 02：Sentence-Transformers BGE Embedding
 Step 03：ChromaDB Vector Store
 Step 04：ChromaDB 入库与检索验证
 Step 05：DeepSeek Grounded Answer
+Step 06：固定评测问题集脚本
 ```
 
 当前可用链路：
@@ -120,6 +121,28 @@ DeepSeek 回答能说明：
 
 ## 已知限制
 
+### 已有固定评测问题集
+
+当前已有固定问题集和脚本：
+
+```text
+backend/data/eval/rules_eval_questions.json
+backend/scripts/evaluate_rules.py
+```
+
+运行方式：
+
+```powershell
+cd keeperkit\backend
+$env:KEEPERKIT_DISABLE_DOTENV = "1"
+$env:INDEX_DIR = ".\data\index\coc7_bge_chroma"
+$env:EMBEDDING_PROVIDER = "sentence_transformers"
+$env:EMBEDDING_MODEL = "BAAI/bge-small-zh-v1.5"
+$env:VECTOR_STORE_PROVIDER = "chroma"
+$env:CHROMA_COLLECTION = "keeperkit_coc7"
+python scripts\evaluate_rules.py --top-k 8 --rerank-top-k 3
+```
+
 ### Reranker 仍然是简单排序
 
 当前：
@@ -160,6 +183,6 @@ BAAI/bge-small-zh-v1.5
 
 1. 接入 BGE reranker。
 2. 优化 chunk 切分，特别是表格、怪物属性块、法术条目。
-3. 增加检索评测脚本，固定 20 个规则问题做回归。
-4. 前端接入真实 `/api/v1/rules/ask`。
+3. 前端接入真实 `/api/v1/rules/ask`。
+4. 扩充评测问题集到 20 个以上，并记录 reranker 前后结果。
 5. 增加 SSE 流式 LLM 输出。
