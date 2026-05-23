@@ -1,1 +1,4 @@
-backend/scripts/__pycache__/split_pdf_by_bookmarks.cpython-312.pyc
+__pycache__/
+*.pyc
+
+backend/data/raw/private/
