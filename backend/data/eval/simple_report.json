@@ -1,0 +1,233 @@
+{
+  "index_dir": "data\\index\\coc7_bge_chroma",
+  "embedding_provider": "sentence_transformers",
+  "embedding_model": "BAAI/bge-small-zh-v1.5",
+  "vector_store_provider": "chroma",
+  "chroma_collection": "keeperkit_coc7",
+  "reranker_provider": "simple",
+  "reranker_model": "BAAI/bge-reranker-v2-m3",
+  "top_k": 8,
+  "rerank_top_k": 3,
+  "results": [
+    {
+      "id": "dice_bonus_penalty",
+      "question": "奖励骰和惩罚骰怎么计算？",
+      "expected_terms": [
+        "奖励骰",
+        "惩罚骰"
+      ],
+      "status": "PASS",
+      "top_score": 0.8007,
+      "top_source": "18-第十六章-附录.md",
+      "top_title": "游戏系统摘要 / 技能检定 / 奖励骰与惩罚骰",
+      "matched_source": "18-第十六章-附录.md",
+      "matched_title": "游戏系统摘要 / 技能检定 / 奖励骰与惩罚骰",
+      "notes": "应召回技能检定或游戏系统摘要中的奖励骰与惩罚骰规则。"
+    },
+    {
+      "id": "pushed_roll_failure",
+      "question": "孤注一掷失败会发生什么？",
+      "expected_terms": [
+        "孤注一掷"
+      ],
+      "status": "MISS",
+      "top_score": 0.6819,
+      "top_source": "18-第十六章-附录.md",
+      "top_title": "游戏系统摘要 / 技能检定",
+      "matched_source": null,
+      "matched_title": null,
+      "notes": "应召回孤注一掷失败后由守秘人描述后果的规则。"
+    },
+    {
+      "id": "difficulty_success",
+      "question": "困难成功和极难成功怎么算？",
+      "expected_terms": [
+        "困难",
+        "极难"
+      ],
+      "status": "PASS",
+      "top_score": 0.534,
+      "top_source": "18-第十六章-附录.md",
+      "top_title": "游戏系统摘要 / 技能检定",
+      "matched_source": "18-第十六章-附录.md",
+      "matched_title": "游戏系统摘要 / 技能检定",
+      "notes": "应召回常规成功、困难成功、极难成功的判定等级。"
+    },
+    {
+      "id": "fumble",
+      "question": "大失败怎么判定？",
+      "expected_terms": [
+        "大失败"
+      ],
+      "status": "PASS",
+      "top_score": 0.6082,
+      "top_source": "07-第五章-游戏系统.md",
+      "top_title": "第五章 游戏系统 / 5.5 大失败与大成功",
+      "matched_source": "07-第五章-游戏系统.md",
+      "matched_title": "第五章 游戏系统 / 5.5 大失败与大成功",
+      "notes": "应召回检定大失败或大失败范围说明。"
+    },
+    {
+      "id": "combat_order",
+      "question": "战斗轮中角色行动顺序怎么决定？",
+      "expected_terms": [
+        "战斗",
+        "行动顺序"
+      ],
+      "status": "PASS",
+      "top_score": 0.7331,
+      "top_source": "08-第六章-战斗.md",
+      "top_title": "第六章 战斗 / 6.1 战斗轮",
+      "matched_source": "08-第六章-战斗.md",
+      "matched_title": "第六章 战斗 / 6.7 可选规则 / 可选规则：先攻检定",
+      "notes": "应召回战斗轮、敏捷或行动顺序相关规则。"
+    },
+    {
+      "id": "fight_back_dodge",
+      "question": "近战中闪避和反击有什么区别？",
+      "expected_terms": [
+        "闪避",
+        "反击"
+      ],
+      "status": "PASS",
+      "top_score": 0.6468,
+      "top_source": "06-第四章-技能.md",
+      "top_title": "第四章 技能 / 4.4 技能列表 / 闪避（DEX 一半的%）",
+      "matched_source": "18-第十六章-附录.md",
+      "matched_title": "近战规则摘要",
+      "notes": "应召回近战防御选项中闪避和反击的差异。"
+    },
+    {
+      "id": "firearm_malfunction",
+      "question": "火器故障值是什么？",
+      "expected_terms": [
+        "故障"
+      ],
+      "status": "PASS",
+      "top_score": 0.5451,
+      "top_source": "15-第十三章-外星科技及其造物.md",
+      "top_title": "第十三章 外星科技及其造物 / 米戈（Mi-Go） / 电气枪",
+      "matched_source": "08-第六章-战斗.md",
+      "matched_title": "第六章 战斗 / 武器故障",
+      "notes": "应召回火器、射击或武器表中的故障值说明。"
+    },
+    {
+      "id": "damage_bonus",
+      "question": "伤害加值怎么计算？",
+      "expected_terms": [
+        "伤害加值"
+      ],
+      "status": "PASS",
+      "top_score": 0.7114,
+      "top_source": "18-第十六章-附录.md",
+      "top_title": "第十六章 附录 / 附录Ⅱ：向上兼容到第七版 / 转化调查员 / 伤害加值(DB)",
+      "matched_source": "18-第十六章-附录.md",
+      "matched_title": "第十六章 附录 / 附录Ⅱ：向上兼容到第七版 / 转化调查员 / 伤害加值(DB)",
+      "notes": "应召回体格、力量或伤害加值表。"
+    },
+    {
+      "id": "sanity_check_failure",
+      "question": "理智检定失败后怎么处理？",
+      "expected_terms": [
+        "理智",
+        "失败"
+      ],
+      "status": "PASS",
+      "top_score": 0.6672,
+      "top_source": "18-第十六章-附录.md",
+      "top_title": "理智规则摘要",
+      "matched_source": "18-第十六章-附录.md",
+      "matched_title": "理智规则摘要",
+      "notes": "应召回理智损失和疯狂判定流程。"
+    },
+    {
+      "id": "temporary_insanity",
+      "question": "临时疯狂怎么判定？",
+      "expected_terms": [
+        "临时疯狂"
+      ],
+      "status": "CANDIDATE_ONLY",
+      "top_score": 0.7152,
+      "top_source": "10-第八章-理智.md",
+      "top_title": "第八章 理智 / 8.2 疯狂 / 临时性疯狂",
+      "matched_source": "10-第八章-理智.md",
+      "matched_title": "第八章 理智 / 8.3 疯狂的影响 / 疯狂阶段2：潜在疯狂",
+      "notes": "应召回一次失去 5 点或更多理智等相关规则。"
+    },
+    {
+      "id": "chase_mov",
+      "question": "追逐中 MOV 怎么影响行动？",
+      "expected_terms": [
+        "追逐",
+        "MOV"
+      ],
+      "status": "PASS",
+      "top_score": 0.6854,
+      "top_source": "18-第十六章-附录.md",
+      "top_title": "追逐规则摘要 / 建立追逐",
+      "matched_source": "18-第十六章-附录.md",
+      "matched_title": "追逐规则摘要 / 建立追逐",
+      "notes": "应召回追逐规则中移动力和行动次数。"
+    },
+    {
+      "id": "magic_points_recovery",
+      "question": "魔法值如何恢复？",
+      "expected_terms": [
+        "魔法值",
+        "恢复"
+      ],
+      "status": "PASS",
+      "top_score": 0.6489,
+      "top_source": "14-第十二章-法术.md",
+      "top_title": "第十二章 法术 / 折磨术",
+      "matched_source": "14-第十二章-法术.md",
+      "matched_title": "第十二章 法术 / 折磨术",
+      "notes": "应召回魔法值恢复速率或规则。"
+    },
+    {
+      "id": "mythos_tomes",
+      "question": "阅读神话典籍会发生什么？",
+      "expected_terms": [
+        "神话",
+        "典籍"
+      ],
+      "status": "PASS",
+      "top_score": 0.7702,
+      "top_source": "13-第十一章-可怖传说书籍.md",
+      "top_title": "第十一章 可怖传说书籍 / 11.1 描述神话典籍",
+      "matched_source": "13-第十一章-可怖传说书籍.md",
+      "matched_title": "第十一章 可怖传说书籍 / 11.1 描述神话典籍",
+      "notes": "应召回克苏鲁神话、神话典籍或阅读收益与代价。"
+    },
+    {
+      "id": "spell_cost",
+      "question": "法术施放需要什么成本？",
+      "expected_terms": [
+        "法术",
+        "成本"
+      ],
+      "status": "MISS",
+      "top_score": 0.5784,
+      "top_source": "11-第九章-魔法.md",
+      "top_title": "第九章 魔法 / 9.2 使用魔法",
+      "matched_source": null,
+      "matched_title": null,
+      "notes": "应召回法术施放所需魔法值、理智或其他成本。"
+    },
+    {
+      "id": "monster_armor_damage",
+      "question": "怪物的护甲和伤害如何理解？",
+      "expected_terms": [
+        "护甲",
+        "伤害"
+      ],
+      "status": "PASS",
+      "top_score": 0.6673,
+      "top_source": "18-第十六章-附录.md",
+      "top_title": "近战规则摘要 / 其它战斗情况 / 护甲",
+      "matched_source": "18-第十六章-附录.md",
+      "matched_title": "近战规则摘要 / 其它战斗情况 / 护甲",
+      "notes": "应召回怪物属性、护甲或攻击伤害说明。"
+    }
+  ]
+}
