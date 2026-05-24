@@ -15,6 +15,7 @@ Step 05：DeepSeek Grounded Answer
 Step 06：固定评测问题集脚本
 Step 07：BGE Reranker
 Step 08：前端接入真实问答接口
+Step 09：黑话检索改写与弱依据回答策略
 ```
 
 当前可用链路：
@@ -25,6 +26,7 @@ clean Markdown
   -> BAAI/bge-small-zh-v1.5 embedding
   -> ChromaDB persistent collection
   -> retriever top-k
+  -> slang query rewrite
   -> configurable reranker top-k
   -> DeepSeek answer
   -> sources
@@ -126,6 +128,19 @@ DeepSeek 回答能说明：
 并能列出依据来源。
 
 ## 已知限制
+
+### 黑话检索改写已接入
+
+当前会对常见 TRPG/CoC 黑话做轻量检索扩展：
+
+```text
+车卡 -> 创建调查员、角色创建、属性、技能、职业、背景
+撕卡 -> 调查员死亡、濒死、疯狂
+SC/SAN -> 理智检定、理智损失、理智值
+DB -> 伤害加值、体格、力量、体型
+```
+
+规则回答仍以检索片段为准；没有明确依据时，会先说明缺少规则书依据，再给出通用建议或提问引导。
 
 ### 前端已接入真实问答接口
 
