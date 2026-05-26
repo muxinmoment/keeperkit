@@ -5,6 +5,7 @@ node_modules/
 dist/
 
 backend/data/raw/private/
+backend/data/modules/private/
 backend/.env
 frontend/.env
 backend/data/index/coc7_bge_chroma/chroma.sqlite3

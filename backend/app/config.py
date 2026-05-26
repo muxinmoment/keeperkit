@@ -24,6 +24,10 @@ class Settings(BaseSettings):
         default=BACKEND_DIR / "data" / "processed",
         alias="PROCESSED_DOCS_DIR",
     )
+    modules_private_dir: Path = Field(
+        default=BACKEND_DIR / "data" / "modules" / "private",
+        alias="MODULES_PRIVATE_DIR",
+    )
     index_dir: Path = Field(default=BACKEND_DIR / "data" / "index", alias="INDEX_DIR")
 
     retrieval_top_k: int = Field(default=8, alias="RETRIEVAL_TOP_K")
