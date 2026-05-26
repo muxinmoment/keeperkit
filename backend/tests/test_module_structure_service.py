@@ -19,3 +19,27 @@ def test_module_structure_service_groups_documents(tmp_path) -> None:
     assert response.groups
     assert any(group.content_type == "scene" for group in response.groups)
     assert any(group.content_type == "npc" for group in response.groups)
+
+
+def test_module_structure_service_previews_pdf_text(tmp_path) -> None:
+    service = ModuleService(modules_dir=tmp_path)
+    service.create_module(ModuleCreateRequest(id="pdf_module", title="PDF 模组"))
+
+    documents_dir = tmp_path / "pdf_module" / "documents"
+    create_pdf(documents_dir / "scene.pdf", "scene: lighthouse\nclue: wet ship log")
+
+    response = ModuleStructureService(service).inspect("pdf_module")
+    previews = [item.preview for group in response.groups for item in group.items]
+
+    assert any("wet ship log" in preview for preview in previews)
+    assert all(not preview.startswith("PDF:") for preview in previews)
+
+
+def create_pdf(path, text: str) -> None:
+    import fitz
+
+    document = fitz.open()
+    page = document.new_page()
+    page.insert_text((72, 72), text)
+    document.save(path)
+    document.close()

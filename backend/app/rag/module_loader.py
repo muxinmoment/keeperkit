@@ -4,20 +4,10 @@ import json
 import re
 from pathlib import Path
 
-try:
-    import fitz
-except ImportError as exc:
-    raise RuntimeError("Missing dependency: pymupdf. Install it with: pip install pymupdf") from exc
-
-try:
-    import pymupdf4llm
-except ImportError:
-    pymupdf4llm = None
-
+from app.rag.document_reader import SUPPORTED_DOCUMENT_SUFFIXES, read_document_text
 from app.rag.types import RawDocument
 
 
-SUPPORTED_SUFFIXES = {".md", ".markdown", ".txt", ".pdf"}
 CONTENT_TYPE_RULES: list[tuple[str, str]] = [
     ("timeline", "timeline"),
     ("时间线", "timeline"),
@@ -60,7 +50,7 @@ def load_module_documents(module_dir: Path) -> list[RawDocument]:
     documents: list[RawDocument] = []
     order_index = 0
     for path in sorted(documents_dir.rglob("*")):
-        if not path.is_file() or path.suffix.lower() not in SUPPORTED_SUFFIXES:
+        if not path.is_file() or path.suffix.lower() not in SUPPORTED_DOCUMENT_SUFFIXES:
             continue
         order_index += 1
         documents.append(
@@ -82,32 +72,6 @@ def load_module_documents(module_dir: Path) -> list[RawDocument]:
         )
 
     return documents
-
-
-def read_document_text(path: Path) -> str:
-    if path.suffix.lower() in {".md", ".markdown", ".txt"}:
-        return path.read_text(encoding="utf-8")
-    if path.suffix.lower() == ".pdf":
-        return read_pdf_text(path)
-    raise ValueError(f"Unsupported document type: {path.suffix}")
-
-
-def read_pdf_text(path: Path) -> str:
-    if pymupdf4llm is not None:
-        try:
-            markdown = pymupdf4llm.to_markdown(str(path))
-            if markdown.strip():
-                return markdown
-        except Exception:
-            pass
-
-    parts: list[str] = []
-    with fitz.open(path) as document:
-        for page_index, page in enumerate(document, start=1):
-            text = page.get_text("text").strip()
-            if text:
-                parts.append(f"\n\n<!-- page: {page_index} -->\n\n{text}")
-    return "\n".join(parts)
 
 
 def guess_content_type(path: Path) -> str:

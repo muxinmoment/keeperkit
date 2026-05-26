@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from pathlib import Path
 
+from app.rag.document_reader import SUPPORTED_DOCUMENT_SUFFIXES, read_document_text
 from app.schemas.modules import ModuleStructureGroup, ModuleStructureItem, ModuleStructureResponse
 from app.services.module_service import ModuleService
 
@@ -53,7 +54,7 @@ class ModuleStructureService:
         groups: dict[str, list[ModuleStructureItem]] = defaultdict(list)
 
         for path in sorted(paths["documents_dir"].rglob("*")):
-            if not path.is_file():
+            if not path.is_file() or path.suffix.lower() not in SUPPORTED_DOCUMENT_SUFFIXES:
                 continue
             content_type = guess_structure_type(path)
             relative_source = str(path.relative_to(paths["documents_dir"]))
@@ -109,11 +110,11 @@ def make_label(path: Path, content_type: str) -> str:
 
 
 def read_preview(path: Path, limit: int = 160) -> str:
-    if path.suffix.lower() == ".pdf":
-        return f"PDF: {path.stem}"
     try:
-        text = path.read_text(encoding="utf-8")
+        text = read_document_text(path)
     except UnicodeDecodeError:
+        return path.name
+    except ValueError:
         return path.name
     preview = text.strip().replace("\n", " ")
     return preview[:limit]

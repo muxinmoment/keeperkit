@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from app.rag.document_reader import SUPPORTED_DOCUMENT_SUFFIXES, read_document_text
 from app.schemas.modules import (
     ModulePrepSummaryItem,
     ModulePrepSummaryResponse,
@@ -30,9 +31,9 @@ class ModulePrepService:
         order = 0
 
         for path in sorted(paths["documents_dir"].rglob("*")):
-            if not path.is_file():
+            if not path.is_file() or path.suffix.lower() not in SUPPORTED_DOCUMENT_SUFFIXES:
                 continue
-            content = read_text(path)
+            content = read_document_text(path)
             content_type = guess_structure_type(path)
             if content_type not in {"scene", "timeline", "document", "note"}:
                 continue
@@ -66,9 +67,9 @@ class ModulePrepService:
         warnings: list[str] = []
 
         for path in sorted(paths["documents_dir"].rglob("*")):
-            if not path.is_file():
+            if not path.is_file() or path.suffix.lower() not in SUPPORTED_DOCUMENT_SUFFIXES:
                 continue
-            content = read_text(path)
+            content = read_document_text(path)
             content_type = guess_structure_type(path)
             preview = make_preview(content)
             title = path.stem
@@ -100,12 +101,6 @@ class ModulePrepService:
             npcs=npcs,
             warnings=warnings,
         )
-
-
-def read_text(path: Path) -> str:
-    if path.suffix.lower() == ".pdf":
-        return f"PDF: {path.stem}"
-    return path.read_text(encoding="utf-8")
 
 
 def extract_first(pattern: re.Pattern[str], lines: list[str] | str) -> str | None:

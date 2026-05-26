@@ -29,3 +29,31 @@ def test_module_prep_service_builds_timeline_and_summary(tmp_path) -> None:
     assert summary.highlights
     assert summary.clues
     assert summary.npcs
+
+
+def test_module_prep_service_reads_pdf_text(tmp_path) -> None:
+    service = ModuleService(modules_dir=tmp_path)
+    service.create_module(ModuleCreateRequest(id="pdf_module", title="PDF 模组"))
+
+    documents_dir = tmp_path / "pdf_module" / "documents"
+    create_pdf(
+        documents_dir / "scene.pdf",
+        "scene: old house\nlocation: hall\nNPC: missing professor\nclue: bloody key",
+    )
+
+    summary = ModulePrepService(service).build_prep_summary("pdf_module")
+
+    assert summary.clues
+    assert summary.npcs
+    assert "bloody key" in summary.clues[0].title
+    assert "missing professor" in summary.npcs[0].title
+
+
+def create_pdf(path, text: str) -> None:
+    import fitz
+
+    document = fitz.open()
+    page = document.new_page()
+    page.insert_text((72, 72), text)
+    document.save(path)
+    document.close()
