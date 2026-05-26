@@ -1,4 +1,5 @@
 from typing import Protocol
+import json
 
 from openai import OpenAI
 
@@ -62,16 +63,38 @@ class TemplateModuleGenerator:
 
     def generate_from_documents(self, module_title: str, documents: list[str]) -> str:
         if not documents:
-            return "当前模组还没有可整理的全文资料。"
+            return json.dumps(
+                {
+                    "overview": "当前模组还没有可整理的全文资料。",
+                    "must_know": [],
+                    "timeline": [],
+                    "workflow": [],
+                    "npcs": [],
+                    "clues": [],
+                    "locations": [],
+                    "risks": [],
+                    "checklist": [],
+                },
+                ensure_ascii=False,
+            )
 
         preview_lines = []
         for index, document in enumerate(documents, start=1):
             preview = document[:420].replace("\n", " ")
             preview_lines.append(f"{index}. {preview}")
-        return (
-            f"# 备团总览\n\n{module_title} 已读取全文资料。接入 LLM 后，这里会生成完整备团提纲。\n\n"
-            "# 当前全文预览\n\n"
-            + "\n".join(preview_lines)
+        return json.dumps(
+            {
+                "overview": f"{module_title} 已读取全文资料。接入 LLM 后，这里会生成完整结构化备团数据。",
+                "must_know": preview_lines[:3],
+                "timeline": [],
+                "workflow": [{"id": "workflow-1", "title": "读取资料", "goal": "确认模组全文已经进入备团会话", "next_steps": []}],
+                "npcs": [],
+                "clues": [],
+                "locations": [],
+                "risks": [],
+                "checklist": ["接入 LLM 后重新生成结构化备团数据"],
+            },
+            ensure_ascii=False,
         )
 
     def revise_prep_section(
@@ -130,7 +153,20 @@ class LLMModuleGenerator:
 
     def generate_from_documents(self, module_title: str, documents: list[str]) -> str:
         if not documents:
-            return "当前模组还没有可整理的全文资料。"
+            return json.dumps(
+                {
+                    "overview": "当前模组还没有可整理的全文资料。",
+                    "must_know": [],
+                    "timeline": [],
+                    "workflow": [],
+                    "npcs": [],
+                    "clues": [],
+                    "locations": [],
+                    "risks": [],
+                    "checklist": [],
+                },
+                ensure_ascii=False,
+            )
 
         prompt = build_full_module_prep_prompt(module_title, documents)
         response = self.client.chat.completions.create(

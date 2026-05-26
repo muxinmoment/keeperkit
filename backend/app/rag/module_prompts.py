@@ -62,25 +62,54 @@ def build_full_module_prep_prompt(module_title: str, documents: list[str]) -> st
 模组全文资料：
 {joined_documents}
 
-请按下面结构输出：
+只允许输出合法 JSON，不要输出 Markdown，不要用 ``` 包裹。
+JSON 结构必须完全符合：
+{{
+  "overview": "一句到三句话的备团总览",
+  "must_know": ["跑团前必须知道的核心点"],
+  "timeline": [
+    {{
+      "id": "timeline-1",
+      "date": "可为空",
+      "title": "事件标题",
+      "summary": "事件摘要",
+      "source": "依据来源或可为空"
+    }}
+  ],
+  "workflow": [
+    {{
+      "id": "workflow-1",
+      "title": "跑团阶段或场景",
+      "goal": "这个阶段的守秘人目标",
+      "next_steps": ["可选下一步或指向线索"]
+    }}
+  ],
+  "npcs": [
+    {{
+      "id": "npc-1",
+      "name": "NPC 名称",
+      "role": "身份",
+      "location": "常出现地点",
+      "motivation": "动机或立场",
+      "notes": "守秘人注意事项"
+    }}
+  ],
+  "clues": [
+    {{
+      "id": "clue-1",
+      "title": "线索名称",
+      "location": "出现地点",
+      "reveal_condition": "获得条件",
+      "points_to": "指向哪里/谁/下一步",
+      "notes": "守秘人提示"
+    }}
+  ],
+  "locations": ["重要地点"],
+  "risks": ["可能卡住、断线或误解的地方"],
+  "checklist": ["跑团前检查项"]
+}}
 
-# 备团总览
-
-# 跑团前必须知道
-
-# 时间线
-
-# 场景清单
-
-# NPC 清单
-
-# 关键线索
-
-# 地点与手牌
-
-# 可能卡住的地方
-
-# 跑团前检查清单
+字段缺失时使用空字符串或空数组。id 必须稳定、简短、只用英文小写、数字和短横线。
 """
 
 
@@ -90,6 +119,12 @@ def build_revise_prep_section_prompt(
     section_content: str,
     instruction: str,
 ) -> str:
+    content_is_json = section_content.strip().startswith("{") or section_content.strip().startswith("[")
+    if content_is_json:
+        output_rule = "当前章节正文是 JSON。只输出修改后的合法 JSON，不要输出 Markdown，不要用 ``` 包裹，不要加解释。必须保持原有 JSON 形状，方便程序直接读取。"
+    else:
+        output_rule = "当前章节正文是普通文本。只输出修改后的正文，不要输出 Markdown，不要加标题，不要加解释。"
+
     return f"""{SYSTEM_PROMPT}
 
 你正在协助守秘人修改一份备团草稿的单个章节。
@@ -100,6 +135,7 @@ def build_revise_prep_section_prompt(
 2. 根据守秘人的修改要求调整内容。
 3. 如果守秘人要求补充细节，可以补充“AI 建议”，但必须明确标注。
 4. 不要输出标题，不要输出解释过程，只输出修改后的章节正文。
+5. {output_rule}
 
 模组名称：
 {module_title}

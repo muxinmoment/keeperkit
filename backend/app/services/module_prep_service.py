@@ -13,6 +13,7 @@ from app.rag.document_reader import SUPPORTED_DOCUMENT_SUFFIXES, build_file_fing
 from app.rag.module_generator import create_module_generator
 from app.schemas.modules import (
     ModulePrepFullSection,
+    ModulePrepStructuredData,
     ModulePrepDraftResponse,
     ModulePrepDraftUpdateRequest,
     ModulePrepMapEdge,
@@ -44,7 +45,7 @@ MAP_KIND_LABELS = {
 }
 FULL_PREP_CACHE_FILE = "prep_full_cache.json"
 FULL_PREP_DRAFT_FILE = "prep_draft.json"
-FULL_PREP_PROMPT_VERSION = "v1"
+FULL_PREP_PROMPT_VERSION = "v2-json"
 
 
 class ModulePrepService:
@@ -262,6 +263,7 @@ class ModulePrepService:
             config=graph_config(module_id),
         )
         answer = str(graph_state.get("answer", ""))
+        structured = parse_structured_prep(answer)
         response = ModulePrepFullResponse(
             module_id=module_id,
             answer=answer,
@@ -269,7 +271,8 @@ class ModulePrepService:
             document_count=len(documents),
             character_count=character_count,
             cache_hit=False,
-            sections=parse_markdown_sections(answer),
+            sections=structured_to_sections(structured),
+            structured=structured,
         )
         write_full_prep_cache(paths["processed_dir"] / FULL_PREP_CACHE_FILE, response, cache_key)
         return response
@@ -279,7 +282,7 @@ class ModulePrepService:
         paths = self.module_service.module_paths(module_id)
         draft_path = paths["processed_dir"] / FULL_PREP_DRAFT_FILE
         cached_draft = read_prep_draft(draft_path)
-        if cached_draft is not None:
+        if cached_draft is not None and not is_structured_empty(cached_draft.structured):
             return cached_draft
 
         full_prep = self.build_full_prep(module_id)
@@ -300,10 +303,12 @@ class ModulePrepService:
         if existing is None:
             existing = self.get_or_create_prep_draft(module_id)
         answer = sections_to_markdown(request.sections)
+        structured = sections_to_structured(request.sections, existing.structured)
         draft = existing.model_copy(
             update={
                 "answer": answer,
                 "sections": request.sections,
+                "structured": structured,
                 "cache_hit": True,
                 "updated_at": current_timestamp(),
             }
@@ -350,6 +355,7 @@ class ModulePrepService:
             update={
                 "answer": sections_to_markdown(revised_sections),
                 "sections": revised_sections,
+                "structured": sections_to_structured(revised_sections, draft.structured),
                 "cache_hit": True,
                 "revision_history": revision_history,
                 "updated_at": current_timestamp(),
@@ -453,6 +459,97 @@ def append_section(sections: list[ModulePrepFullSection], title: str, lines: lis
     if not content:
         return
     sections.append(ModulePrepFullSection(id=make_section_id(title, len(sections) + 1), title=title, content=content))
+
+
+def parse_structured_prep(text: str) -> ModulePrepStructuredData:
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError:
+        payload = json.loads(extract_json_object(text))
+    return ModulePrepStructuredData.model_validate(payload)
+
+
+def extract_json_object(text: str) -> str:
+    stripped = text.strip()
+    if stripped.startswith("```"):
+        stripped = re.sub(r"^```(?:json)?\s*", "", stripped, flags=re.IGNORECASE)
+        stripped = re.sub(r"\s*```$", "", stripped)
+        text = stripped
+    start = text.find("{")
+    end = text.rfind("}")
+    if start < 0 or end < 0 or end <= start:
+        raise ValueError("AI response did not contain a JSON object.")
+    return text[start : end + 1]
+
+
+def structured_to_sections(structured: ModulePrepStructuredData) -> list[ModulePrepFullSection]:
+    sections = [
+        ModulePrepFullSection(id="overview", title="备团总览", content=structured.overview),
+        ModulePrepFullSection(id="must-know", title="跑团前必须知道", content="\n".join(structured.must_know)),
+        ModulePrepFullSection(id="timeline", title="时间线", content=json.dumps([item.model_dump() for item in structured.timeline], ensure_ascii=False, indent=2)),
+        ModulePrepFullSection(id="workflow", title="备团工作流", content=json.dumps([item.model_dump() for item in structured.workflow], ensure_ascii=False, indent=2)),
+        ModulePrepFullSection(id="npcs", title="NPC 清单", content=json.dumps([item.model_dump() for item in structured.npcs], ensure_ascii=False, indent=2)),
+        ModulePrepFullSection(id="clues", title="关键线索", content=json.dumps([item.model_dump() for item in structured.clues], ensure_ascii=False, indent=2)),
+        ModulePrepFullSection(id="locations", title="地点与手牌", content="\n".join(structured.locations)),
+        ModulePrepFullSection(id="risks", title="可能卡住的地方", content="\n".join(structured.risks)),
+        ModulePrepFullSection(id="checklist", title="跑团前检查清单", content="\n".join(structured.checklist)),
+    ]
+    return [section for section in sections if section.content.strip()]
+
+
+def sections_to_structured(
+    sections: list[ModulePrepFullSection],
+    fallback: ModulePrepStructuredData,
+) -> ModulePrepStructuredData:
+    # Manual text edits are preserved in sections; structured cards keep the last valid JSON shape.
+    values = fallback.model_dump()
+    for section in sections:
+        if section.id == "overview":
+            values["overview"] = section.content
+        elif section.id == "must-know":
+            values["must_know"] = lines_to_list(section.content)
+        elif section.id == "locations":
+            values["locations"] = lines_to_list(section.content)
+        elif section.id == "risks":
+            values["risks"] = lines_to_list(section.content)
+        elif section.id == "checklist":
+            values["checklist"] = lines_to_list(section.content)
+        elif section.id == "timeline":
+            values["timeline"] = parse_json_section(section.content, values["timeline"])
+        elif section.id == "workflow":
+            values["workflow"] = parse_json_section(section.content, values["workflow"])
+        elif section.id == "npcs":
+            values["npcs"] = parse_json_section(section.content, values["npcs"])
+        elif section.id == "clues":
+            values["clues"] = parse_json_section(section.content, values["clues"])
+    return ModulePrepStructuredData.model_validate(values)
+
+
+def parse_json_section(text: str, fallback: object) -> object:
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        return fallback
+
+
+def lines_to_list(text: str) -> list[str]:
+    return [line.strip("-* ").strip() for line in text.splitlines() if line.strip()]
+
+
+def is_structured_empty(structured: ModulePrepStructuredData) -> bool:
+    return not any(
+        [
+            structured.overview.strip(),
+            structured.must_know,
+            structured.timeline,
+            structured.workflow,
+            structured.npcs,
+            structured.clues,
+            structured.locations,
+            structured.risks,
+            structured.checklist,
+        ]
+    )
 
 
 def make_section_id(title: str, index: int) -> str:

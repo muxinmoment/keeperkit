@@ -51,6 +51,7 @@ export type ModulePrepFullResponse = {
   character_count: number;
   cache_hit: boolean;
   sections: ModulePrepFullSection[];
+  structured: ModulePrepStructuredData;
 };
 
 export type ModulePrepFullSection = {
@@ -63,6 +64,51 @@ export type ModulePrepDraftResponse = ModulePrepFullResponse & {
   updated_at?: string | null;
   thread_id?: string | null;
   revision_history: Array<Record<string, string>>;
+};
+
+export type ModulePrepStructuredData = {
+  overview: string;
+  must_know: string[];
+  timeline: ModulePrepTimelineItem[];
+  workflow: ModulePrepWorkflowStep[];
+  npcs: ModulePrepNpcItem[];
+  clues: ModulePrepClueItem[];
+  locations: string[];
+  risks: string[];
+  checklist: string[];
+};
+
+export type ModulePrepTimelineItem = {
+  id: string;
+  date?: string | null;
+  title: string;
+  summary: string;
+  source?: string | null;
+};
+
+export type ModulePrepWorkflowStep = {
+  id: string;
+  title: string;
+  goal: string;
+  next_steps: string[];
+};
+
+export type ModulePrepNpcItem = {
+  id: string;
+  name: string;
+  role?: string | null;
+  location?: string | null;
+  motivation?: string | null;
+  notes?: string | null;
+};
+
+export type ModulePrepClueItem = {
+  id: string;
+  title: string;
+  location?: string | null;
+  reveal_condition?: string | null;
+  points_to?: string | null;
+  notes?: string | null;
 };
 
 export type ModuleIngestResponse = {

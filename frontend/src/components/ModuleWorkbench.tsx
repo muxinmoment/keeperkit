@@ -15,6 +15,7 @@ import {
   type ModuleSource,
   type ModulePrepFullSection,
   type ModulePrepMapResponse,
+  type ModulePrepStructuredData,
   type ModulePrepSummaryResponse,
   type ModuleStructureResponse,
   type ModuleTimelineResponse,
@@ -59,6 +60,7 @@ export function ModuleWorkbench() {
   const [prepAiBrief, setPrepAiBrief] = useState<string | null>(null);
   const [prepAiBriefMeta, setPrepAiBriefMeta] = useState<string | null>(null);
   const [prepAiBriefSections, setPrepAiBriefSections] = useState<ModulePrepFullSection[]>([]);
+  const [prepStructured, setPrepStructured] = useState<ModulePrepStructuredData | null>(null);
   const [status, setStatus] = useState("Ready");
   const [error, setError] = useState<string | null>(null);
   const [structureCount, setStructureCount] = useState(0);
@@ -82,6 +84,7 @@ export function ModuleWorkbench() {
       setPrepAiBrief(null);
       setPrepAiBriefMeta(null);
       setPrepAiBriefSections([]);
+      setPrepStructured(null);
       setMessages([]);
       setSources([]);
       return;
@@ -91,6 +94,7 @@ export function ModuleWorkbench() {
     setPrepAiBrief(null);
     setPrepAiBriefMeta(null);
     setPrepAiBriefSections([]);
+    setPrepStructured(null);
     void refreshStructure(selectedModuleId);
     void refreshPrepArtifacts(selectedModuleId);
   }, [selectedModuleId]);
@@ -210,6 +214,7 @@ export function ModuleWorkbench() {
       setPrepAiBrief(null);
       setPrepAiBriefMeta(null);
       setPrepAiBriefSections([]);
+      setPrepStructured(null);
       setStructureCount(0);
       setSelectedModuleId("");
       await refreshModules();
@@ -249,6 +254,7 @@ export function ModuleWorkbench() {
         `${response.document_count} files / ${response.character_count} chars / thread ${shortThreadId(response.thread_id)}`
       );
       setPrepAiBriefSections(response.sections);
+      setPrepStructured(response.structured);
       setSources(response.sources);
     });
   }
@@ -264,6 +270,7 @@ export function ModuleWorkbench() {
       setPrepAiBrief(response.answer);
       setPrepAiBriefMeta(`${response.document_count} files / ${response.character_count} chars / saved ${shortThreadId(response.thread_id)}`);
       setPrepAiBriefSections(response.sections);
+      setPrepStructured(response.structured);
       setSources(response.sources);
     });
   }
@@ -279,6 +286,7 @@ export function ModuleWorkbench() {
       setPrepAiBrief(response.answer);
       setPrepAiBriefMeta(`${response.document_count} files / ${response.character_count} chars / graph ${shortThreadId(response.thread_id)}`);
       setPrepAiBriefSections(response.sections);
+      setPrepStructured(response.structured);
       setSources(response.sources);
     });
   }
@@ -434,6 +442,7 @@ export function ModuleWorkbench() {
               onReviseSection={handleRevisePrepSection}
               onSaveSections={handleSavePrepSections}
               prepMap={prepMap}
+              structured={prepStructured}
               summary={prepSummary}
               timeline={timeline}
             />

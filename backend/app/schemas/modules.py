@@ -55,6 +55,51 @@ class ModulePrepFullSection(BaseModel):
     content: str
 
 
+class ModulePrepTimelineItem(BaseModel):
+    id: str
+    date: str | None = None
+    title: str
+    summary: str
+    source: str | None = None
+
+
+class ModulePrepNpcItem(BaseModel):
+    id: str
+    name: str
+    role: str | None = None
+    location: str | None = None
+    motivation: str | None = None
+    notes: str | None = None
+
+
+class ModulePrepClueItem(BaseModel):
+    id: str
+    title: str
+    location: str | None = None
+    reveal_condition: str | None = None
+    points_to: str | None = None
+    notes: str | None = None
+
+
+class ModulePrepWorkflowStep(BaseModel):
+    id: str
+    title: str
+    goal: str
+    next_steps: list[str] = Field(default_factory=list)
+
+
+class ModulePrepStructuredData(BaseModel):
+    overview: str = ""
+    must_know: list[str] = Field(default_factory=list)
+    timeline: list[ModulePrepTimelineItem] = Field(default_factory=list)
+    workflow: list[ModulePrepWorkflowStep] = Field(default_factory=list)
+    npcs: list[ModulePrepNpcItem] = Field(default_factory=list)
+    clues: list[ModulePrepClueItem] = Field(default_factory=list)
+    locations: list[str] = Field(default_factory=list)
+    risks: list[str] = Field(default_factory=list)
+    checklist: list[str] = Field(default_factory=list)
+
+
 class ModulePrepFullResponse(BaseModel):
     module_id: str
     answer: str
@@ -63,6 +108,7 @@ class ModulePrepFullResponse(BaseModel):
     character_count: int
     cache_hit: bool = False
     sections: list[ModulePrepFullSection] = Field(default_factory=list)
+    structured: ModulePrepStructuredData = Field(default_factory=ModulePrepStructuredData)
 
 
 class ModulePrepDraftResponse(ModulePrepFullResponse):

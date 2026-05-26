@@ -45,8 +45,11 @@ def test_module_prep_service_builds_timeline_and_summary(tmp_path) -> None:
     assert full_prep.document_count == 2
     assert full_prep.character_count > 0
     assert full_prep.sources
-    assert "全文" in full_prep.answer or "预览" in full_prep.answer
+    assert full_prep.structured.overview
+    assert any(section.id == "overview" for section in full_prep.sections)
+    assert any(section.id == "workflow" for section in full_prep.sections)
     assert draft.sections
+    assert draft.structured.overview
     assert revised.sections[0].content != draft.sections[0].content
     assert revised.revision_history
 
