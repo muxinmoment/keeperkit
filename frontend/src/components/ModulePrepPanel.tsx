@@ -4,9 +4,19 @@ type Props = {
   summary: ModulePrepSummaryResponse | null;
   timeline: ModuleTimelineResponse | null;
   isLoading: boolean;
+  aiBrief: string | null;
+  canGenerateAiBrief: boolean;
+  onGenerateAiBrief: () => void;
 };
 
-export function ModulePrepPanel({ summary, timeline, isLoading }: Props) {
+export function ModulePrepPanel({
+  summary,
+  timeline,
+  isLoading,
+  aiBrief,
+  canGenerateAiBrief,
+  onGenerateAiBrief
+}: Props) {
   return (
     <section className="prep-panel">
       <div className="prep-panel__header">
@@ -14,11 +24,23 @@ export function ModulePrepPanel({ summary, timeline, isLoading }: Props) {
           <p className="eyebrow">V1.2 Prep</p>
           <h2>备团助手</h2>
         </div>
-        <span>{timeline?.events.length ?? 0} events</span>
+        <div className="prep-panel__actions">
+          <span>{timeline?.events.length ?? 0} events</span>
+          <button disabled={!canGenerateAiBrief || isLoading} onClick={onGenerateAiBrief} type="button">
+            AI 整理
+          </button>
+        </div>
       </div>
       {isLoading ? <p className="sources__empty">正在整理备团信息...</p> : null}
       {!isLoading && !summary && !timeline ? (
         <p className="sources__empty">还没有备团信息，先上传并建立索引。</p>
+      ) : null}
+
+      {aiBrief ? (
+        <div className="prep-block prep-block--ai">
+          <strong>AI 备团提纲</strong>
+          <p>{aiBrief}</p>
+        </div>
       ) : null}
 
       {summary?.warnings.length ? (

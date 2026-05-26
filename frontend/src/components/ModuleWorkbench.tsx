@@ -26,9 +26,19 @@ type Message = {
   content: string;
 };
 
+type WorkbenchTab = "ask" | "prep" | "structure" | "sources";
+
+const TABS: Array<{ id: WorkbenchTab; label: string; hint: string }> = [
+  { id: "ask", label: "模组问答", hint: "AI 检索与回答" },
+  { id: "prep", label: "备团助手", hint: "时间线 / NPC / 线索" },
+  { id: "structure", label: "结构视图", hint: "文件与内容索引" },
+  { id: "sources", label: "来源依据", hint: "本轮问答引用" }
+];
+
 export function ModuleWorkbench() {
   const [modules, setModules] = useState<ModuleSummary[]>([]);
   const [selectedModuleId, setSelectedModuleId] = useState("");
+  const [activeTab, setActiveTab] = useState<WorkbenchTab>("ask");
   const [newModuleId, setNewModuleId] = useState("demo_module");
   const [newModuleTitle, setNewModuleTitle] = useState("演示模组");
   const [question, setQuestion] = useState("这个模组的开场场景是什么？");
@@ -37,9 +47,11 @@ export function ModuleWorkbench() {
   const [structure, setStructure] = useState<ModuleStructureResponse | null>(null);
   const [timeline, setTimeline] = useState<ModuleTimelineResponse | null>(null);
   const [prepSummary, setPrepSummary] = useState<ModulePrepSummaryResponse | null>(null);
+  const [prepAiBrief, setPrepAiBrief] = useState<string | null>(null);
   const [status, setStatus] = useState("Ready");
   const [error, setError] = useState<string | null>(null);
   const [structureCount, setStructureCount] = useState(0);
+  const isBusy = status !== "Ready";
 
   const selectedModule = useMemo(
     () => modules.find((item) => item.id === selectedModuleId) ?? null,
@@ -55,8 +67,10 @@ export function ModuleWorkbench() {
       setStructure(null);
       setTimeline(null);
       setPrepSummary(null);
+      setPrepAiBrief(null);
       return;
     }
+    setPrepAiBrief(null);
     void refreshStructure(selectedModuleId);
     void refreshPrepArtifacts(selectedModuleId);
   }, [selectedModuleId]);
@@ -159,6 +173,7 @@ export function ModuleWorkbench() {
       setStructure(null);
       setTimeline(null);
       setPrepSummary(null);
+      setPrepAiBrief(null);
       setStructureCount(0);
       setSelectedModuleId("");
       await refreshModules();
@@ -181,6 +196,24 @@ export function ModuleWorkbench() {
         rerank_top_k: 3
       });
       setMessages((current) => [...current, { role: "assistant", content: response.answer }]);
+      setSources(response.sources);
+    });
+  }
+
+  async function handleGeneratePrepBrief() {
+    if (!selectedModuleId) {
+      setError("请先选择一个模组。");
+      return;
+    }
+
+    await runTask("AI Prep", async () => {
+      const response = await askModule(selectedModuleId, {
+        question:
+          "请基于当前模组资料，为新人守秘人整理一份备团提纲。请包括开场、关键场景、NPC、核心线索、可能断点和跑团前检查清单。不要改写剧情，只做分析整理。",
+        top_k: 12,
+        rerank_top_k: 5
+      });
+      setPrepAiBrief(response.answer);
       setSources(response.sources);
     });
   }
@@ -240,69 +273,111 @@ export function ModuleWorkbench() {
         </div>
       </aside>
 
-      <section className="center-stack">
-        <section className="console">
-          <div className="console__header">
-            <div>
-              <p className="eyebrow">Module QA / Structure / Prep</p>
-              <h2>{selectedModule?.title ?? "选择一个模组"}</h2>
-              {selectedModule ? (
-                <p className="module-stats">
-                  {selectedModule.document_count} files / {selectedModule.index_ready ? "indexed" : "not indexed"} / {structureCount} items / prep ready
-                </p>
-              ) : null}
-            </div>
-            <div className="console__status">
-              <span className="status">{status}</span>
-              <label className="upload-button">
-                上传资料
-                <input accept=".md,.markdown,.txt,.pdf" disabled={!selectedModuleId} onChange={handleUpload} type="file" />
-              </label>
-              <button className="ghost-button" disabled={!selectedModuleId} onClick={handleIngest} type="button">
-                建立索引
-              </button>
-              <button className="delete-button" disabled={!selectedModuleId} onClick={handleDeleteModule} type="button">
-                删除模组
-              </button>
-            </div>
-          </div>
-
-          <div className="messages">
-            {messages.length === 0 ? (
-              <div className="empty">
-                <p>创建模组、上传资料、建立索引后，就可以围绕当前模组提问。</p>
-              </div>
+      <section className="workspace">
+        <section className="workspace-hero">
+          <div>
+            <p className="eyebrow">Module Command Desk</p>
+            <h2>{selectedModule?.title ?? "选择一个模组"}</h2>
+            {selectedModule ? (
+              <p className="module-stats">
+                {selectedModule.document_count} files / {selectedModule.index_ready ? "indexed" : "not indexed"} / {structureCount} structure items
+              </p>
             ) : (
-              messages.map((message, index) => (
-                <article className={`message message--${message.role}`} key={`${message.role}-${index}`}>
-                  <span>{message.role === "user" ? "You" : "Assistant"}</span>
-                  <p>{message.content}</p>
-                </article>
-              ))
+              <p className="module-stats">先创建或选择模组，再上传 PDF、Markdown 或 TXT 资料。</p>
             )}
-            {error ? <p className="error">{error}</p> : null}
           </div>
-
-          <form className="prompt" onSubmit={handleAsk}>
-            <div className="prompt__row">
-              <input
-                disabled={!selectedModuleId}
-                onChange={(event) => setQuestion(event.target.value)}
-                placeholder="围绕当前模组提问"
-                value={question}
-              />
-              <button disabled={!selectedModuleId || status !== "Ready"} type="submit">
-                Ask
-              </button>
-            </div>
-          </form>
+          <div className="workspace-actions">
+            <span className="status">{status}</span>
+            <label className="upload-button">
+              上传资料
+              <input accept=".md,.markdown,.txt,.pdf" disabled={!selectedModuleId} onChange={handleUpload} type="file" />
+            </label>
+            <button className="ghost-button" disabled={!selectedModuleId} onClick={handleIngest} type="button">
+              建立索引
+            </button>
+            <button className="delete-button" disabled={!selectedModuleId} onClick={handleDeleteModule} type="button">
+              删除模组
+            </button>
+          </div>
         </section>
 
-        <ModulePrepPanel isLoading={status !== "Ready"} summary={prepSummary} timeline={timeline} />
-        <ModuleStructurePanel isLoading={status !== "Ready"} structure={structure} />
-      </section>
+        <nav className="workspace-tabs" aria-label="模组功能区">
+          {TABS.map((tab) => (
+            <button
+              className={activeTab === tab.id ? "workspace-tab workspace-tab--active" : "workspace-tab"}
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              type="button"
+            >
+              <span>{tab.label}</span>
+              <small>{tab.hint}</small>
+            </button>
+          ))}
+        </nav>
 
-      <SourceList isLoading={status !== "Ready"} sources={sources} />
+        <section className="tab-surface">
+          {activeTab === "ask" ? (
+            <section className="console">
+              <div className="console__header">
+                <div>
+                  <p className="eyebrow">Module QA</p>
+                  <h2>问当前模组</h2>
+                </div>
+                <span className="mini-pill">{messages.length} messages</span>
+              </div>
+
+              <div className="messages">
+                {messages.length === 0 ? (
+                  <div className="empty">
+                    <p>上传资料并建立索引后，可以直接问开场、线索、NPC 动机或规则相关问题。</p>
+                  </div>
+                ) : (
+                  messages.map((message, index) => (
+                    <article className={`message message--${message.role}`} key={`${message.role}-${index}`}>
+                      <span>{message.role === "user" ? "You" : "Assistant"}</span>
+                      <p>{message.content}</p>
+                    </article>
+                  ))
+                )}
+                {error ? <p className="error">{error}</p> : null}
+              </div>
+
+              <form className="prompt" onSubmit={handleAsk}>
+                <div className="prompt__row">
+                  <input
+                    disabled={!selectedModuleId}
+                    onChange={(event) => setQuestion(event.target.value)}
+                    placeholder="围绕当前模组提问"
+                    value={question}
+                  />
+                  <button disabled={!selectedModuleId || isBusy} type="submit">
+                    Ask
+                  </button>
+                </div>
+              </form>
+            </section>
+          ) : null}
+
+          {activeTab === "prep" ? (
+            <ModulePrepPanel
+              aiBrief={prepAiBrief}
+              canGenerateAiBrief={Boolean(selectedModuleId)}
+              isLoading={isBusy}
+              onGenerateAiBrief={handleGeneratePrepBrief}
+              summary={prepSummary}
+              timeline={timeline}
+            />
+          ) : null}
+
+          {activeTab === "structure" ? (
+            <ModuleStructurePanel isLoading={isBusy} structure={structure} />
+          ) : null}
+
+          {activeTab === "sources" ? (
+            <SourceList isLoading={isBusy} sources={sources} />
+          ) : null}
+        </section>
+      </section>
     </main>
   );
 }
