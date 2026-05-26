@@ -49,6 +49,13 @@ export type ModulePrepFullResponse = {
   sources: ModuleSource[];
   document_count: number;
   character_count: number;
+  cache_hit: boolean;
+  sections: ModulePrepFullSection[];
+};
+
+export type ModulePrepFullSection = {
+  title: string;
+  content: string;
 };
 
 export type ModuleIngestResponse = {

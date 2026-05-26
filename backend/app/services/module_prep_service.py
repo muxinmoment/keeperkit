@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 from pathlib import Path
 
-from app.rag.document_reader import SUPPORTED_DOCUMENT_SUFFIXES, read_document_text
-from app.rag.module_generator import create_module_generator
 from app.config import settings
+from app.rag.document_reader import SUPPORTED_DOCUMENT_SUFFIXES, build_file_fingerprint, read_document_text
+from app.rag.module_generator import create_module_generator
 from app.schemas.modules import (
+    ModulePrepFullSection,
     ModulePrepMapEdge,
     ModulePrepMapNode,
     ModulePrepMapResponse,
@@ -34,6 +37,8 @@ MAP_KIND_LABELS = {
     "trigger": "触发",
     "document": "资料",
 }
+FULL_PREP_CACHE_FILE = "prep_full_cache.json"
+FULL_PREP_PROMPT_VERSION = "v1"
 
 
 class ModulePrepService:
@@ -50,7 +55,7 @@ class ModulePrepService:
         for path in sorted(paths["documents_dir"].rglob("*")):
             if not path.is_file() or path.suffix.lower() not in SUPPORTED_DOCUMENT_SUFFIXES:
                 continue
-            content = read_document_text(path)
+            content = read_cached_document_text(paths, path)
             content_type = guess_structure_type(path)
             if content_type not in {"scene", "timeline", "document", "note"}:
                 continue
@@ -86,7 +91,7 @@ class ModulePrepService:
         for path in sorted(paths["documents_dir"].rglob("*")):
             if not path.is_file() or path.suffix.lower() not in SUPPORTED_DOCUMENT_SUFFIXES:
                 continue
-            content = read_document_text(path)
+            content = read_cached_document_text(paths, path)
             content_type = guess_structure_type(path)
             preview = make_preview(content)
             title = path.stem
@@ -137,7 +142,7 @@ class ModulePrepService:
         for path in sorted(paths["documents_dir"].rglob("*")):
             if not path.is_file() or path.suffix.lower() not in SUPPORTED_DOCUMENT_SUFFIXES:
                 continue
-            content = read_document_text(path)
+            content = read_cached_document_text(paths, path)
             lines = iterate_lines(content)
             if not lines:
                 continue
@@ -205,17 +210,25 @@ class ModulePrepService:
         documents: list[str] = []
         sources: list[ModuleSource] = []
         character_count = 0
+        fingerprints: list[dict[str, object]] = []
 
         for path in sorted(paths["documents_dir"].rglob("*")):
             if not path.is_file() or path.suffix.lower() not in SUPPORTED_DOCUMENT_SUFFIXES:
                 continue
-            content = read_document_text(path).strip()
+            content = read_cached_document_text(paths, path).strip()
             if not content:
                 continue
             source = str(path.relative_to(paths["documents_dir"]))
             content_type = guess_structure_type(path)
             documents.append(f"[来源：{source}]\n类型：{content_type}\n\n{content}")
             character_count += len(content)
+            fingerprints.append(
+                {
+                    "source": source,
+                    "content_type": content_type,
+                    "fingerprint": build_file_fingerprint(path),
+                }
+            )
             sources.append(
                 ModuleSource(
                     knowledge_base="module_fulltext",
@@ -228,14 +241,23 @@ class ModulePrepService:
                 )
             )
 
+        cache_key = build_full_prep_cache_key(fingerprints)
+        cached_response = read_full_prep_cache(paths["processed_dir"] / FULL_PREP_CACHE_FILE, module_id, cache_key)
+        if cached_response is not None:
+            return cached_response
+
         answer = self.generator.generate_from_documents(module.title, documents)
-        return ModulePrepFullResponse(
+        response = ModulePrepFullResponse(
             module_id=module_id,
             answer=answer,
             sources=sources,
             document_count=len(documents),
             character_count=character_count,
+            cache_hit=False,
+            sections=parse_markdown_sections(answer),
         )
+        write_full_prep_cache(paths["processed_dir"] / FULL_PREP_CACHE_FILE, response, cache_key)
+        return response
 
 
 def extract_first(pattern: re.Pattern[str], lines: list[str] | str) -> str | None:
@@ -264,6 +286,74 @@ def extract_many(pattern: re.Pattern[str], lines: list[str] | str, limit: int = 
 
 def make_preview(text: str, limit: int = 140) -> str:
     return text.replace("\n", " ").strip()[:limit]
+
+
+def read_cached_document_text(paths: dict[str, Path], path: Path) -> str:
+    return read_document_text(path, cache_dir=paths["processed_dir"] / "text_cache")
+
+
+def build_full_prep_cache_key(fingerprints: list[dict[str, object]]) -> str:
+    payload = {
+        "documents": fingerprints,
+        "generator_provider": settings.generator_provider,
+        "llm_model": settings.llm_model,
+        "prompt_version": FULL_PREP_PROMPT_VERSION,
+    }
+    raw_value = json.dumps(payload, ensure_ascii=False, sort_keys=True)
+    return hashlib.sha256(raw_value.encode("utf-8")).hexdigest()
+
+
+def read_full_prep_cache(cache_path: Path, module_id: str, cache_key: str) -> ModulePrepFullResponse | None:
+    if not cache_path.exists():
+        return None
+    payload = json.loads(cache_path.read_text(encoding="utf-8"))
+    if payload.get("cache_key") != cache_key:
+        return None
+    response_payload = payload.get("response")
+    if not isinstance(response_payload, dict):
+        return None
+    response = ModulePrepFullResponse.model_validate(response_payload)
+    return response.model_copy(update={"module_id": module_id, "cache_hit": True})
+
+
+def write_full_prep_cache(cache_path: Path, response: ModulePrepFullResponse, cache_key: str) -> None:
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    cache_path.write_text(
+        json.dumps(
+            {
+                "cache_key": cache_key,
+                "response": response.model_dump(mode="json"),
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+
+def parse_markdown_sections(text: str) -> list[ModulePrepFullSection]:
+    sections: list[ModulePrepFullSection] = []
+    current_title = "备团提纲"
+    current_lines: list[str] = []
+
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if line.startswith("# "):
+            append_section(sections, current_title, current_lines)
+            current_title = line.lstrip("#").strip() or "未命名章节"
+            current_lines = []
+            continue
+        current_lines.append(raw_line)
+
+    append_section(sections, current_title, current_lines)
+    return sections
+
+
+def append_section(sections: list[ModulePrepFullSection], title: str, lines: list[str]) -> None:
+    content = "\n".join(lines).strip()
+    if not content:
+        return
+    sections.append(ModulePrepFullSection(title=title, content=content))
 
 
 def make_event_title(path: Path, lines: list[str]) -> str:

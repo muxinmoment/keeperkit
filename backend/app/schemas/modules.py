@@ -49,12 +49,19 @@ class ModuleAskResponse(BaseModel):
     sources: list[ModuleSource]
 
 
+class ModulePrepFullSection(BaseModel):
+    title: str
+    content: str
+
+
 class ModulePrepFullResponse(BaseModel):
     module_id: str
     answer: str
     sources: list[ModuleSource]
     document_count: int
     character_count: int
+    cache_hit: bool = False
+    sections: list[ModulePrepFullSection] = Field(default_factory=list)
 
 
 class ModuleIngestResponse(BaseModel):

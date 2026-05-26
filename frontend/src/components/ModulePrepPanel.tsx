@@ -1,4 +1,9 @@
-import type { ModulePrepMapResponse, ModulePrepSummaryResponse, ModuleTimelineResponse } from "../api/modules";
+import type {
+  ModulePrepFullSection,
+  ModulePrepMapResponse,
+  ModulePrepSummaryResponse,
+  ModuleTimelineResponse
+} from "../api/modules";
 import { ModulePrepMap } from "./ModulePrepMap";
 
 type Props = {
@@ -8,6 +13,7 @@ type Props = {
   isLoading: boolean;
   aiBrief: string | null;
   aiBriefMeta: string | null;
+  aiBriefSections: ModulePrepFullSection[];
   canGenerateAiBrief: boolean;
   onGenerateAiBrief: () => void;
 };
@@ -19,6 +25,7 @@ export function ModulePrepPanel({
   isLoading,
   aiBrief,
   aiBriefMeta,
+  aiBriefSections,
   canGenerateAiBrief,
   onGenerateAiBrief
 }: Props) {
@@ -59,7 +66,18 @@ export function ModulePrepPanel({
         <div className="prep-block prep-block--ai">
           <strong>AI 备团提纲</strong>
           {aiBriefMeta ? <small>{aiBriefMeta}</small> : null}
-          <p>{aiBrief}</p>
+          {aiBriefSections.length > 0 ? (
+            <div className="prep-sections">
+              {aiBriefSections.map((section) => (
+                <article className="prep-section" key={section.title}>
+                  <h3>{section.title}</h3>
+                  <p>{section.content}</p>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p>{aiBrief}</p>
+          )}
         </div>
       ) : null}
 

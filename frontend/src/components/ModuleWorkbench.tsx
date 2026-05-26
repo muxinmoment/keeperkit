@@ -12,6 +12,7 @@ import {
   ingestModule,
   listModules,
   type ModuleSource,
+  type ModulePrepFullSection,
   type ModulePrepMapResponse,
   type ModulePrepSummaryResponse,
   type ModuleStructureResponse,
@@ -55,6 +56,7 @@ export function ModuleWorkbench() {
   const [prepMap, setPrepMap] = useState<ModulePrepMapResponse | null>(null);
   const [prepAiBrief, setPrepAiBrief] = useState<string | null>(null);
   const [prepAiBriefMeta, setPrepAiBriefMeta] = useState<string | null>(null);
+  const [prepAiBriefSections, setPrepAiBriefSections] = useState<ModulePrepFullSection[]>([]);
   const [status, setStatus] = useState("Ready");
   const [error, setError] = useState<string | null>(null);
   const [structureCount, setStructureCount] = useState(0);
@@ -77,6 +79,7 @@ export function ModuleWorkbench() {
       setPrepMap(null);
       setPrepAiBrief(null);
       setPrepAiBriefMeta(null);
+      setPrepAiBriefSections([]);
       setMessages([]);
       setSources([]);
       return;
@@ -85,6 +88,7 @@ export function ModuleWorkbench() {
     setSources([]);
     setPrepAiBrief(null);
     setPrepAiBriefMeta(null);
+    setPrepAiBriefSections([]);
     void refreshStructure(selectedModuleId);
     void refreshPrepArtifacts(selectedModuleId);
   }, [selectedModuleId]);
@@ -203,6 +207,7 @@ export function ModuleWorkbench() {
       setPrepMap(null);
       setPrepAiBrief(null);
       setPrepAiBriefMeta(null);
+      setPrepAiBriefSections([]);
       setStructureCount(0);
       setSelectedModuleId("");
       await refreshModules();
@@ -238,7 +243,10 @@ export function ModuleWorkbench() {
     await runTask("AI Prep", async () => {
       const response = await generateModuleFullPrep(selectedModuleId);
       setPrepAiBrief(response.answer);
-      setPrepAiBriefMeta(`${response.document_count} files / ${response.character_count} chars / full text`);
+      setPrepAiBriefMeta(
+        `${response.document_count} files / ${response.character_count} chars / ${response.cache_hit ? "cache hit" : "generated"}`
+      );
+      setPrepAiBriefSections(response.sections);
       setSources(response.sources);
     });
   }
@@ -387,6 +395,7 @@ export function ModuleWorkbench() {
             <ModulePrepPanel
               aiBrief={prepAiBrief}
               aiBriefMeta={prepAiBriefMeta}
+              aiBriefSections={prepAiBriefSections}
               canGenerateAiBrief={Boolean(selectedModuleId)}
               isLoading={isBusy}
               onGenerateAiBrief={handleGeneratePrepBrief}
