@@ -49,6 +49,14 @@ class ModuleAskResponse(BaseModel):
     sources: list[ModuleSource]
 
 
+class ModulePrepFullResponse(BaseModel):
+    module_id: str
+    answer: str
+    sources: list[ModuleSource]
+    document_count: int
+    character_count: int
+
+
 class ModuleIngestResponse(BaseModel):
     module_id: str
     document_count: int

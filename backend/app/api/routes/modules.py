@@ -6,6 +6,7 @@ from app.schemas.modules import (
     ModuleCreateRequest,
     ModuleDetail,
     ModuleIngestResponse,
+    ModulePrepFullResponse,
     ModulePrepMapResponse,
     ModulePrepSummaryResponse,
     ModuleTimelineResponse,
@@ -115,5 +116,13 @@ def get_module_prep_summary(module_id: str) -> ModulePrepSummaryResponse:
 def get_module_prep_map(module_id: str) -> ModulePrepMapResponse:
     try:
         return prep_service.build_prep_map(module_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.post("/{module_id}/prep-full", response_model=ModulePrepFullResponse)
+def generate_module_full_prep(module_id: str) -> ModulePrepFullResponse:
+    try:
+        return prep_service.build_full_prep(module_id)
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc

@@ -43,6 +43,14 @@ export type ModuleAskResponse = {
   sources: ModuleSource[];
 };
 
+export type ModulePrepFullResponse = {
+  module_id: string;
+  answer: string;
+  sources: ModuleSource[];
+  document_count: number;
+  character_count: number;
+};
+
 export type ModuleIngestResponse = {
   module_id: string;
   document_count: number;
@@ -182,6 +190,16 @@ export async function askModule(moduleId: string, request: ModuleAskRequest): Pr
       "Content-Type": "application/json"
     },
     body: JSON.stringify(request)
+  });
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+  return response.json();
+}
+
+export async function generateModuleFullPrep(moduleId: string): Promise<ModulePrepFullResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/modules/${moduleId}/prep-full`, {
+    method: "POST"
   });
   if (!response.ok) {
     throw new Error(await getErrorMessage(response));

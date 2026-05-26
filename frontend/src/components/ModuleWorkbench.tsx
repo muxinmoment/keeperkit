@@ -4,6 +4,7 @@ import {
   askModule,
   createModule,
   deleteModule,
+  generateModuleFullPrep,
   getModulePrepMap,
   getModulePrepSummary,
   getModuleStructure,
@@ -28,6 +29,8 @@ type Message = {
   content: string;
 };
 
+const MESSAGE_STORAGE_PREFIX = "keeperkit.module.messages.";
+
 type WorkbenchTab = "ask" | "prep" | "structure" | "sources";
 
 const TABS: Array<{ id: WorkbenchTab; label: string; hint: string }> = [
@@ -51,6 +54,7 @@ export function ModuleWorkbench() {
   const [prepSummary, setPrepSummary] = useState<ModulePrepSummaryResponse | null>(null);
   const [prepMap, setPrepMap] = useState<ModulePrepMapResponse | null>(null);
   const [prepAiBrief, setPrepAiBrief] = useState<string | null>(null);
+  const [prepAiBriefMeta, setPrepAiBriefMeta] = useState<string | null>(null);
   const [status, setStatus] = useState("Ready");
   const [error, setError] = useState<string | null>(null);
   const [structureCount, setStructureCount] = useState(0);
@@ -72,12 +76,25 @@ export function ModuleWorkbench() {
       setPrepSummary(null);
       setPrepMap(null);
       setPrepAiBrief(null);
+      setPrepAiBriefMeta(null);
+      setMessages([]);
+      setSources([]);
       return;
     }
+    setMessages(loadMessages(selectedModuleId));
+    setSources([]);
     setPrepAiBrief(null);
+    setPrepAiBriefMeta(null);
     void refreshStructure(selectedModuleId);
     void refreshPrepArtifacts(selectedModuleId);
   }, [selectedModuleId]);
+
+  useEffect(() => {
+    if (!selectedModuleId) {
+      return;
+    }
+    saveMessages(selectedModuleId, messages);
+  }, [messages, selectedModuleId]);
 
   async function refreshModules(nextSelectedId?: string) {
     const nextModules = await listModules();
@@ -185,6 +202,7 @@ export function ModuleWorkbench() {
       setPrepSummary(null);
       setPrepMap(null);
       setPrepAiBrief(null);
+      setPrepAiBriefMeta(null);
       setStructureCount(0);
       setSelectedModuleId("");
       await refreshModules();
@@ -218,13 +236,9 @@ export function ModuleWorkbench() {
     }
 
     await runTask("AI Prep", async () => {
-      const response = await askModule(selectedModuleId, {
-        question:
-          "请基于当前模组资料，为新人守秘人整理一份备团提纲。请包括开场、关键场景、NPC、核心线索、可能断点和跑团前检查清单。不要改写剧情，只做分析整理。",
-        top_k: 12,
-        rerank_top_k: 5
-      });
+      const response = await generateModuleFullPrep(selectedModuleId);
       setPrepAiBrief(response.answer);
+      setPrepAiBriefMeta(`${response.document_count} files / ${response.character_count} chars / full text`);
       setSources(response.sources);
     });
   }
@@ -372,6 +386,7 @@ export function ModuleWorkbench() {
           {activeTab === "prep" ? (
             <ModulePrepPanel
               aiBrief={prepAiBrief}
+              aiBriefMeta={prepAiBriefMeta}
               canGenerateAiBrief={Boolean(selectedModuleId)}
               isLoading={isBusy}
               onGenerateAiBrief={handleGeneratePrepBrief}
@@ -392,4 +407,32 @@ export function ModuleWorkbench() {
       </section>
     </main>
   );
+}
+
+function loadMessages(moduleId: string): Message[] {
+  try {
+    const rawValue = window.localStorage.getItem(`${MESSAGE_STORAGE_PREFIX}${moduleId}`);
+    if (!rawValue) {
+      return [];
+    }
+    const parsed = JSON.parse(rawValue);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    return parsed.filter(isMessage);
+  } catch {
+    return [];
+  }
+}
+
+function saveMessages(moduleId: string, messages: Message[]) {
+  window.localStorage.setItem(`${MESSAGE_STORAGE_PREFIX}${moduleId}`, JSON.stringify(messages));
+}
+
+function isMessage(value: unknown): value is Message {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  const candidate = value as Partial<Message>;
+  return (candidate.role === "user" || candidate.role === "assistant") && typeof candidate.content === "string";
 }

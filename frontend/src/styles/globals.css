@@ -521,6 +521,12 @@ button:disabled,
   background: rgba(158, 199, 162, 0.08);
 }
 
+.prep-block--ai small {
+  color: var(--green);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
 .prep-block--ai p {
   white-space: pre-wrap;
 }

@@ -4,12 +4,16 @@ import re
 from pathlib import Path
 
 from app.rag.document_reader import SUPPORTED_DOCUMENT_SUFFIXES, read_document_text
+from app.rag.module_generator import create_module_generator
+from app.config import settings
 from app.schemas.modules import (
     ModulePrepMapEdge,
     ModulePrepMapNode,
     ModulePrepMapResponse,
+    ModulePrepFullResponse,
     ModulePrepSummaryItem,
     ModulePrepSummaryResponse,
+    ModuleSource,
     ModuleTimelineEvent,
     ModuleTimelineResponse,
 )
@@ -35,6 +39,7 @@ MAP_KIND_LABELS = {
 class ModulePrepService:
     def __init__(self, module_service: ModuleService | None = None) -> None:
         self.module_service = module_service or ModuleService()
+        self.generator = create_module_generator(settings.generator_provider)
 
     def build_timeline(self, module_id: str) -> ModuleTimelineResponse:
         self.module_service.get_module(module_id)
@@ -194,6 +199,44 @@ class ModulePrepService:
             warnings=warnings,
         )
 
+    def build_full_prep(self, module_id: str) -> ModulePrepFullResponse:
+        module = self.module_service.get_module(module_id)
+        paths = self.module_service.module_paths(module_id)
+        documents: list[str] = []
+        sources: list[ModuleSource] = []
+        character_count = 0
+
+        for path in sorted(paths["documents_dir"].rglob("*")):
+            if not path.is_file() or path.suffix.lower() not in SUPPORTED_DOCUMENT_SUFFIXES:
+                continue
+            content = read_document_text(path).strip()
+            if not content:
+                continue
+            source = str(path.relative_to(paths["documents_dir"]))
+            content_type = guess_structure_type(path)
+            documents.append(f"[来源：{source}]\n类型：{content_type}\n\n{content}")
+            character_count += len(content)
+            sources.append(
+                ModuleSource(
+                    knowledge_base="module_fulltext",
+                    module_id=module_id,
+                    source=source,
+                    title_path=guess_title_path_from_path(path),
+                    content_type=content_type,
+                    spoiler_level=module.spoiler_level,
+                    content_preview=make_preview(content, limit=180),
+                )
+            )
+
+        answer = self.generator.generate_from_documents(module.title, documents)
+        return ModulePrepFullResponse(
+            module_id=module_id,
+            answer=answer,
+            sources=sources,
+            document_count=len(documents),
+            character_count=character_count,
+        )
+
 
 def extract_first(pattern: re.Pattern[str], lines: list[str] | str) -> str | None:
     for line in iterate_lines(lines):
@@ -228,6 +271,15 @@ def make_event_title(path: Path, lines: list[str]) -> str:
     if not first_line:
         return path.stem
     return first_line[:60]
+
+
+def guess_title_path_from_path(path: Path) -> list[str]:
+    parts = [part for part in path.with_suffix("").parts if part not in {"documents", "processed", "assets", "notes", "revisions"}]
+    if len(parts) > 1:
+        return parts[-2:]
+    if parts:
+        return [parts[-1]]
+    return []
 
 
 def make_node_id(kind: str, value: str) -> str:

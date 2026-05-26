@@ -3,7 +3,7 @@ from typing import Protocol
 from openai import OpenAI
 
 from app.config import settings
-from app.rag.module_prompts import build_module_prompt
+from app.rag.module_prompts import build_full_module_prep_prompt, build_module_prompt
 from app.rag.types import RetrievedChunk
 
 
@@ -15,6 +15,9 @@ class ModuleGenerator(Protocol):
         retrieval_question: str | None = None,
         query_notes: list[str] | None = None,
     ) -> str:
+        ...
+
+    def generate_from_documents(self, module_title: str, documents: list[str]) -> str:
         ...
 
 
@@ -43,6 +46,20 @@ class TemplateModuleGenerator:
             query_notes=query_notes,
         )
         return "我先返回检索到的模组依据。\n\n" + "\n".join(preview_lines)
+
+    def generate_from_documents(self, module_title: str, documents: list[str]) -> str:
+        if not documents:
+            return "当前模组还没有可整理的全文资料。"
+
+        preview_lines = []
+        for index, document in enumerate(documents, start=1):
+            preview = document[:420].replace("\n", " ")
+            preview_lines.append(f"{index}. {preview}")
+        return (
+            f"# 备团总览\n\n{module_title} 已读取全文资料。接入 LLM 后，这里会生成完整备团提纲。\n\n"
+            "# 当前全文预览\n\n"
+            + "\n".join(preview_lines)
+        )
 
 
 class LLMModuleGenerator:
@@ -79,6 +96,21 @@ class LLMModuleGenerator:
             retrieval_question=retrieval_question,
             query_notes=query_notes,
         )
+        response = self.client.chat.completions.create(
+            model=settings.llm_model,
+            temperature=0.0,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        answer = response.choices[0].message.content
+        if not answer:
+            raise RuntimeError("LLM returned an empty answer.")
+        return answer
+
+    def generate_from_documents(self, module_title: str, documents: list[str]) -> str:
+        if not documents:
+            return "当前模组还没有可整理的全文资料。"
+
+        prompt = build_full_module_prep_prompt(module_title, documents)
         response = self.client.chat.completions.create(
             model=settings.llm_model,
             temperature=0.0,

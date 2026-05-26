@@ -7,6 +7,7 @@ type Props = {
   prepMap: ModulePrepMapResponse | null;
   isLoading: boolean;
   aiBrief: string | null;
+  aiBriefMeta: string | null;
   canGenerateAiBrief: boolean;
   onGenerateAiBrief: () => void;
 };
@@ -17,6 +18,7 @@ export function ModulePrepPanel({
   prepMap,
   isLoading,
   aiBrief,
+  aiBriefMeta,
   canGenerateAiBrief,
   onGenerateAiBrief
 }: Props) {
@@ -30,7 +32,7 @@ export function ModulePrepPanel({
         <div className="prep-panel__actions">
           <span>{timeline?.events.length ?? 0} events</span>
           <button disabled={!canGenerateAiBrief || isLoading} onClick={onGenerateAiBrief} type="button">
-            AI 整理
+            AI 全文备团
           </button>
         </div>
       </div>
@@ -56,6 +58,7 @@ export function ModulePrepPanel({
       {aiBrief ? (
         <div className="prep-block prep-block--ai">
           <strong>AI 备团提纲</strong>
+          {aiBriefMeta ? <small>{aiBriefMeta}</small> : null}
           <p>{aiBrief}</p>
         </div>
       ) : null}
