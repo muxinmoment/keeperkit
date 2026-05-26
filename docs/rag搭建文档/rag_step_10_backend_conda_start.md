@@ -44,20 +44,28 @@ $env:TRANSFORMERS_OFFLINE = "1"
 项目根目录：
 
 ```powershell
-.\backend\scripts\start_backend.ps1
+.\keeperkit.ps1 backend
 ```
 
 开启开发 reload：
 
 ```powershell
-.\backend\scripts\start_backend.ps1 -Reload
+.\keeperkit.ps1 backend -Reload
 ```
 
 如果需要重新联网检查或下载 Hugging Face 模型：
 
 ```powershell
-.\backend\scripts\start_backend.ps1 -OnlineHuggingFace
+.\keeperkit.ps1 backend -OnlineHuggingFace
 ```
+
+底层脚本仍然保留：
+
+```powershell
+.\backend\scripts\start_backend.ps1
+```
+
+日常只需要记住根目录入口 `keeperkit.ps1`。
 
 ## 验证方式
 

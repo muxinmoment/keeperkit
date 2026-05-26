@@ -22,13 +22,8 @@ keeperkit/
 ## Backend Quick Start
 
 ```powershell
-cd keeperkit\backend
-python -m venv .venv
-.\.venv\Scripts\activate
-pip install -r requirements.txt
-copy .env.example .env
-python scripts\ingest_rules.py
-uvicorn app.main:app --reload
+cd keeperkit
+.\keeperkit.ps1 backend
 ```
 
 Then open:
@@ -36,6 +31,14 @@ Then open:
 ```text
 http://127.0.0.1:8000/docs
 ```
+
+For development reload:
+
+```powershell
+.\keeperkit.ps1 backend -Reload
+```
+
+The backend launcher uses the local `keeperkit` conda environment and cached Hugging Face models by default.
 
 ## Frontend Quick Start
 
