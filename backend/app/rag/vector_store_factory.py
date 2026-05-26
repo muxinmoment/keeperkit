@@ -10,6 +10,7 @@ def create_vector_store(
     provider: str,
     index_dir: Path,
     embedding_model: EmbeddingModel,
+    collection_name: str | None = None,
 ) -> JsonVectorStore:
     normalized_provider = provider.lower().strip()
     if normalized_provider == "json":
@@ -18,6 +19,6 @@ def create_vector_store(
         return ChromaVectorStore(
             index_dir=index_dir,
             embedding_model=embedding_model,
-            collection_name=settings.chroma_collection,
+            collection_name=collection_name or settings.chroma_collection,
         )
     raise ValueError(f"Unsupported vector store provider: {provider}")
