@@ -3,13 +3,17 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 
+from app.agents.module_prep_graph import create_module_prep_graph
 from app.config import settings
 from app.rag.document_reader import SUPPORTED_DOCUMENT_SUFFIXES, build_file_fingerprint, read_document_text
 from app.rag.module_generator import create_module_generator
 from app.schemas.modules import (
     ModulePrepFullSection,
+    ModulePrepDraftResponse,
+    ModulePrepDraftUpdateRequest,
     ModulePrepMapEdge,
     ModulePrepMapNode,
     ModulePrepMapResponse,
@@ -38,6 +42,7 @@ MAP_KIND_LABELS = {
     "document": "资料",
 }
 FULL_PREP_CACHE_FILE = "prep_full_cache.json"
+FULL_PREP_DRAFT_FILE = "prep_draft.json"
 FULL_PREP_PROMPT_VERSION = "v1"
 
 
@@ -45,6 +50,7 @@ class ModulePrepService:
     def __init__(self, module_service: ModuleService | None = None) -> None:
         self.module_service = module_service or ModuleService()
         self.generator = create_module_generator(settings.generator_provider)
+        self.prep_graph = create_module_prep_graph(self.generator)
 
     def build_timeline(self, module_id: str) -> ModuleTimelineResponse:
         self.module_service.get_module(module_id)
@@ -246,7 +252,14 @@ class ModulePrepService:
         if cached_response is not None:
             return cached_response
 
-        answer = self.generator.generate_from_documents(module.title, documents)
+        graph_state = self.prep_graph.invoke(
+            {
+                "action": "generate",
+                "module_title": module.title,
+                "documents": documents,
+            }
+        )
+        answer = str(graph_state.get("answer", ""))
         response = ModulePrepFullResponse(
             module_id=module_id,
             answer=answer,
@@ -258,6 +271,88 @@ class ModulePrepService:
         )
         write_full_prep_cache(paths["processed_dir"] / FULL_PREP_CACHE_FILE, response, cache_key)
         return response
+
+    def get_or_create_prep_draft(self, module_id: str) -> ModulePrepDraftResponse:
+        self.module_service.get_module(module_id)
+        paths = self.module_service.module_paths(module_id)
+        draft_path = paths["processed_dir"] / FULL_PREP_DRAFT_FILE
+        cached_draft = read_prep_draft(draft_path)
+        if cached_draft is not None:
+            return cached_draft
+
+        full_prep = self.build_full_prep(module_id)
+        draft = ModulePrepDraftResponse(
+            **full_prep.model_dump(),
+            updated_at=current_timestamp(),
+            revision_history=[],
+        )
+        write_prep_draft(draft_path, draft)
+        return draft
+
+    def update_prep_draft(self, module_id: str, request: ModulePrepDraftUpdateRequest) -> ModulePrepDraftResponse:
+        self.module_service.get_module(module_id)
+        paths = self.module_service.module_paths(module_id)
+        draft_path = paths["processed_dir"] / FULL_PREP_DRAFT_FILE
+        existing = read_prep_draft(draft_path)
+        if existing is None:
+            existing = self.get_or_create_prep_draft(module_id)
+        answer = sections_to_markdown(request.sections)
+        draft = existing.model_copy(
+            update={
+                "answer": answer,
+                "sections": request.sections,
+                "cache_hit": True,
+                "updated_at": current_timestamp(),
+            }
+        )
+        write_prep_draft(draft_path, draft)
+        return draft
+
+    def revise_prep_draft_section(
+        self,
+        module_id: str,
+        section_id: str,
+        instruction: str,
+    ) -> ModulePrepDraftResponse:
+        module = self.module_service.get_module(module_id)
+        paths = self.module_service.module_paths(module_id)
+        draft_path = paths["processed_dir"] / FULL_PREP_DRAFT_FILE
+        draft = read_prep_draft(draft_path) or self.get_or_create_prep_draft(module_id)
+        sections = list(draft.sections)
+        target_index = next((index for index, section in enumerate(sections) if section.id == section_id), None)
+        if target_index is None:
+            raise ValueError(f"Prep section not found: {section_id}")
+
+        target = sections[target_index]
+        graph_state = self.prep_graph.invoke(
+            {
+                "action": "revise",
+                "module_title": module.title,
+                "sections": [section.model_dump() for section in sections],
+                "section_id": section_id,
+                "instruction": instruction,
+                "revision_history": draft.revision_history,
+            }
+        )
+        revised_sections = [
+            ModulePrepFullSection.model_validate(section)
+            for section in graph_state.get("sections", [])
+        ]
+        revision_history = [
+            dict(item)
+            for item in graph_state.get("revision_history", draft.revision_history)
+        ]
+        updated = draft.model_copy(
+            update={
+                "answer": sections_to_markdown(revised_sections),
+                "sections": revised_sections,
+                "cache_hit": True,
+                "revision_history": revision_history,
+                "updated_at": current_timestamp(),
+            }
+        )
+        write_prep_draft(draft_path, updated)
+        return updated
 
 
 def extract_first(pattern: re.Pattern[str], lines: list[str] | str) -> str | None:
@@ -353,7 +448,35 @@ def append_section(sections: list[ModulePrepFullSection], title: str, lines: lis
     content = "\n".join(lines).strip()
     if not content:
         return
-    sections.append(ModulePrepFullSection(title=title, content=content))
+    sections.append(ModulePrepFullSection(id=make_section_id(title, len(sections) + 1), title=title, content=content))
+
+
+def make_section_id(title: str, index: int) -> str:
+    normalized = re.sub(r"\W+", "-", title.lower(), flags=re.UNICODE).strip("-")
+    return f"section-{index}-{normalized[:36] or 'untitled'}"
+
+
+def sections_to_markdown(sections: list[ModulePrepFullSection]) -> str:
+    return "\n\n".join(f"# {section.title}\n\n{section.content}".strip() for section in sections)
+
+
+def read_prep_draft(draft_path: Path) -> ModulePrepDraftResponse | None:
+    if not draft_path.exists():
+        return None
+    payload = json.loads(draft_path.read_text(encoding="utf-8"))
+    return ModulePrepDraftResponse.model_validate(payload)
+
+
+def write_prep_draft(draft_path: Path, draft: ModulePrepDraftResponse) -> None:
+    draft_path.parent.mkdir(parents=True, exist_ok=True)
+    draft_path.write_text(
+        json.dumps(draft.model_dump(mode="json"), ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
+def current_timestamp() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 def make_event_title(path: Path, lines: list[str]) -> str:

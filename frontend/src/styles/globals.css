@@ -546,6 +546,17 @@ button:disabled,
   background: rgba(8, 11, 8, 0.42);
 }
 
+.prep-section__header,
+.prep-section__revise {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.prep-section__header {
+  justify-content: space-between;
+}
+
 .prep-section h3 {
   margin: 0;
   color: var(--gold);
@@ -553,13 +564,43 @@ button:disabled,
   line-height: 1.25;
 }
 
-.prep-section p {
-  margin: 0;
-  max-height: 360px;
-  overflow: auto;
+.prep-section textarea {
+  width: 100%;
+  min-height: 300px;
+  resize: vertical;
+}
+
+.prep-section textarea,
+.prep-section__revise input {
+  border: 1px solid rgba(222, 197, 132, 0.18);
+  border-radius: 8px;
+  padding: 10px 12px;
   color: var(--muted);
+  background: rgba(8, 11, 8, 0.62);
+  font: inherit;
   line-height: 1.62;
-  white-space: pre-wrap;
+}
+
+.prep-section__revise input {
+  min-width: 0;
+  flex: 1;
+}
+
+.prep-section__header button,
+.prep-section__revise button {
+  min-height: 36px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--ink);
+  background: var(--gold);
+  cursor: pointer;
+}
+
+.prep-section__header button:disabled,
+.prep-section__revise button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .prep-block--map {

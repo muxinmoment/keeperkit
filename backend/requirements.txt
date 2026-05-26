@@ -6,6 +6,7 @@ python-dotenv
 python-multipart
 httpx
 openai
+langgraph
 pytest
 pymupdf
 pymupdf4llm

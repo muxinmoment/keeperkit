@@ -4,13 +4,14 @@ import {
   askModule,
   createModule,
   deleteModule,
-  generateModuleFullPrep,
+  getModulePrepDraft,
   getModulePrepMap,
   getModulePrepSummary,
   getModuleStructure,
   getModuleTimeline,
   ingestModule,
   listModules,
+  reviseModulePrepSection,
   type ModuleSource,
   type ModulePrepFullSection,
   type ModulePrepMapResponse,
@@ -18,6 +19,7 @@ import {
   type ModuleStructureResponse,
   type ModuleTimelineResponse,
   type ModuleSummary,
+  updateModulePrepDraft,
   uploadModuleDocument
 } from "../api/modules";
 import { API_BASE_URL } from "../api/rules";
@@ -241,11 +243,41 @@ export function ModuleWorkbench() {
     }
 
     await runTask("AI Prep", async () => {
-      const response = await generateModuleFullPrep(selectedModuleId);
+      const response = await getModulePrepDraft(selectedModuleId);
       setPrepAiBrief(response.answer);
       setPrepAiBriefMeta(
-        `${response.document_count} files / ${response.character_count} chars / ${response.cache_hit ? "cache hit" : "generated"}`
+        `${response.document_count} files / ${response.character_count} chars / draft state`
       );
+      setPrepAiBriefSections(response.sections);
+      setSources(response.sources);
+    });
+  }
+
+  async function handleSavePrepSections(sections: ModulePrepFullSection[]) {
+    if (!selectedModuleId) {
+      setError("请先选择一个模组。");
+      return;
+    }
+
+    await runTask("Saving Prep", async () => {
+      const response = await updateModulePrepDraft(selectedModuleId, sections);
+      setPrepAiBrief(response.answer);
+      setPrepAiBriefMeta(`${response.document_count} files / ${response.character_count} chars / saved draft`);
+      setPrepAiBriefSections(response.sections);
+      setSources(response.sources);
+    });
+  }
+
+  async function handleRevisePrepSection(sectionId: string, instruction: string) {
+    if (!selectedModuleId) {
+      setError("请先选择一个模组。");
+      return;
+    }
+
+    await runTask("Revising Prep", async () => {
+      const response = await reviseModulePrepSection(selectedModuleId, sectionId, instruction);
+      setPrepAiBrief(response.answer);
+      setPrepAiBriefMeta(`${response.document_count} files / ${response.character_count} chars / graph draft`);
       setPrepAiBriefSections(response.sections);
       setSources(response.sources);
     });
@@ -399,6 +431,8 @@ export function ModuleWorkbench() {
               canGenerateAiBrief={Boolean(selectedModuleId)}
               isLoading={isBusy}
               onGenerateAiBrief={handleGeneratePrepBrief}
+              onReviseSection={handleRevisePrepSection}
+              onSaveSections={handleSavePrepSections}
               prepMap={prepMap}
               summary={prepSummary}
               timeline={timeline}

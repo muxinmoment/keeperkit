@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import type {
   ModulePrepFullSection,
   ModulePrepMapResponse,
@@ -16,6 +18,8 @@ type Props = {
   aiBriefSections: ModulePrepFullSection[];
   canGenerateAiBrief: boolean;
   onGenerateAiBrief: () => void;
+  onSaveSections: (sections: ModulePrepFullSection[]) => void;
+  onReviseSection: (sectionId: string, instruction: string) => void;
 };
 
 export function ModulePrepPanel({
@@ -27,7 +31,9 @@ export function ModulePrepPanel({
   aiBriefMeta,
   aiBriefSections,
   canGenerateAiBrief,
-  onGenerateAiBrief
+  onGenerateAiBrief,
+  onSaveSections,
+  onReviseSection
 }: Props) {
   return (
     <section className="prep-panel">
@@ -69,10 +75,14 @@ export function ModulePrepPanel({
           {aiBriefSections.length > 0 ? (
             <div className="prep-sections">
               {aiBriefSections.map((section) => (
-                <article className="prep-section" key={section.title}>
-                  <h3>{section.title}</h3>
-                  <p>{section.content}</p>
-                </article>
+                <PrepSectionEditor
+                  isLoading={isLoading}
+                  key={section.id}
+                  onReviseSection={onReviseSection}
+                  onSaveSections={onSaveSections}
+                  section={section}
+                  sections={aiBriefSections}
+                />
               ))}
             </div>
           ) : (
@@ -131,5 +141,69 @@ export function ModulePrepPanel({
         </div>
       ) : null}
     </section>
+  );
+}
+
+type SectionEditorProps = {
+  section: ModulePrepFullSection;
+  sections: ModulePrepFullSection[];
+  isLoading: boolean;
+  onSaveSections: (sections: ModulePrepFullSection[]) => void;
+  onReviseSection: (sectionId: string, instruction: string) => void;
+};
+
+function PrepSectionEditor({
+  section,
+  sections,
+  isLoading,
+  onSaveSections,
+  onReviseSection
+}: SectionEditorProps) {
+  const [draftContent, setDraftContent] = useState(section.content);
+  const [instruction, setInstruction] = useState("");
+
+  useEffect(() => {
+    setDraftContent(section.content);
+  }, [section.content]);
+
+  function handleSave() {
+    onSaveSections(
+      sections.map((item) => (item.id === section.id ? { ...item, content: draftContent } : item))
+    );
+  }
+
+  function handleRevise() {
+    const trimmed = instruction.trim();
+    if (!trimmed) {
+      return;
+    }
+    onReviseSection(section.id, trimmed);
+    setInstruction("");
+  }
+
+  return (
+    <article className="prep-section">
+      <div className="prep-section__header">
+        <h3>{section.title}</h3>
+        <button disabled={isLoading || draftContent === section.content} onClick={handleSave} type="button">
+          保存
+        </button>
+      </div>
+      <textarea
+        aria-label={`${section.title} 章节内容`}
+        onChange={(event) => setDraftContent(event.target.value)}
+        value={draftContent}
+      />
+      <div className="prep-section__revise">
+        <input
+          onChange={(event) => setInstruction(event.target.value)}
+          placeholder="告诉 AI 这一节怎么改"
+          value={instruction}
+        />
+        <button disabled={isLoading || !instruction.trim()} onClick={handleRevise} type="button">
+          AI 修改
+        </button>
+      </div>
+    </article>
   );
 }

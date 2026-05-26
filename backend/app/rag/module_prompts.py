@@ -82,3 +82,36 @@ def build_full_module_prep_prompt(module_title: str, documents: list[str]) -> st
 
 # 跑团前检查清单
 """
+
+
+def build_revise_prep_section_prompt(
+    module_title: str,
+    section_title: str,
+    section_content: str,
+    instruction: str,
+) -> str:
+    return f"""{SYSTEM_PROMPT}
+
+你正在协助守秘人修改一份备团草稿的单个章节。
+这是一段持续编辑中的备团稿，不要重新生成整份文档，只修改当前章节。
+
+要求：
+1. 严格保留当前章节主题，不要扩展到其他章节。
+2. 根据守秘人的修改要求调整内容。
+3. 如果守秘人要求补充细节，可以补充“AI 建议”，但必须明确标注。
+4. 不要输出标题，不要输出解释过程，只输出修改后的章节正文。
+
+模组名称：
+{module_title}
+
+章节标题：
+{section_title}
+
+当前章节正文：
+{section_content}
+
+守秘人的修改要求：
+{instruction}
+
+请输出修改后的章节正文。
+"""

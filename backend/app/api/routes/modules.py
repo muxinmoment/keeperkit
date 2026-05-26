@@ -6,6 +6,8 @@ from app.schemas.modules import (
     ModuleCreateRequest,
     ModuleDetail,
     ModuleIngestResponse,
+    ModulePrepDraftResponse,
+    ModulePrepDraftUpdateRequest,
     ModulePrepFullResponse,
     ModulePrepMapResponse,
     ModulePrepSummaryResponse,
@@ -13,6 +15,7 @@ from app.schemas.modules import (
     ModuleSummary,
     ModuleUploadResponse,
     ModuleStructureResponse,
+    ModulePrepSectionReviseRequest,
 )
 from app.services.module_ingest_service import ModuleIngestService
 from app.services.module_prep_service import ModulePrepService
@@ -126,3 +129,29 @@ def generate_module_full_prep(module_id: str) -> ModulePrepFullResponse:
         return prep_service.build_full_prep(module_id)
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.get("/{module_id}/prep-draft", response_model=ModulePrepDraftResponse)
+def get_module_prep_draft(module_id: str) -> ModulePrepDraftResponse:
+    try:
+        return prep_service.get_or_create_prep_draft(module_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.put("/{module_id}/prep-draft", response_model=ModulePrepDraftResponse)
+def update_module_prep_draft(module_id: str, request: ModulePrepDraftUpdateRequest) -> ModulePrepDraftResponse:
+    try:
+        return prep_service.update_prep_draft(module_id, request)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.post("/{module_id}/prep-draft/revise-section", response_model=ModulePrepDraftResponse)
+def revise_module_prep_section(module_id: str, request: ModulePrepSectionReviseRequest) -> ModulePrepDraftResponse:
+    try:
+        return prep_service.revise_prep_draft_section(module_id, request.section_id, request.instruction)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc

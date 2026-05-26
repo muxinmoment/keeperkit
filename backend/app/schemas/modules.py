@@ -50,6 +50,7 @@ class ModuleAskResponse(BaseModel):
 
 
 class ModulePrepFullSection(BaseModel):
+    id: str
     title: str
     content: str
 
@@ -62,6 +63,20 @@ class ModulePrepFullResponse(BaseModel):
     character_count: int
     cache_hit: bool = False
     sections: list[ModulePrepFullSection] = Field(default_factory=list)
+
+
+class ModulePrepDraftResponse(ModulePrepFullResponse):
+    updated_at: str | None = None
+    revision_history: list[dict[str, str]] = Field(default_factory=list)
+
+
+class ModulePrepDraftUpdateRequest(BaseModel):
+    sections: list[ModulePrepFullSection]
+
+
+class ModulePrepSectionReviseRequest(BaseModel):
+    section_id: str
+    instruction: str = Field(min_length=1)
 
 
 class ModuleIngestResponse(BaseModel):

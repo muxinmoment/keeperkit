@@ -54,8 +54,13 @@ export type ModulePrepFullResponse = {
 };
 
 export type ModulePrepFullSection = {
+  id: string;
   title: string;
   content: string;
+};
+
+export type ModulePrepDraftResponse = ModulePrepFullResponse & {
+  updated_at?: string | null;
 };
 
 export type ModuleIngestResponse = {
@@ -207,6 +212,49 @@ export async function askModule(moduleId: string, request: ModuleAskRequest): Pr
 export async function generateModuleFullPrep(moduleId: string): Promise<ModulePrepFullResponse> {
   const response = await fetch(`${API_BASE_URL}/api/v1/modules/${moduleId}/prep-full`, {
     method: "POST"
+  });
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+  return response.json();
+}
+
+export async function getModulePrepDraft(moduleId: string): Promise<ModulePrepDraftResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/modules/${moduleId}/prep-draft`);
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+  return response.json();
+}
+
+export async function updateModulePrepDraft(
+  moduleId: string,
+  sections: ModulePrepFullSection[]
+): Promise<ModulePrepDraftResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/modules/${moduleId}/prep-draft`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ sections })
+  });
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+  return response.json();
+}
+
+export async function reviseModulePrepSection(
+  moduleId: string,
+  sectionId: string,
+  instruction: string
+): Promise<ModulePrepDraftResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/modules/${moduleId}/prep-draft/revise-section`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ section_id: sectionId, instruction })
   });
   if (!response.ok) {
     throw new Error(await getErrorMessage(response));

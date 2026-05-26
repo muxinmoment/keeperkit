@@ -22,6 +22,12 @@ def test_module_prep_service_builds_timeline_and_summary(tmp_path) -> None:
     summary = prep_service.build_prep_summary("demo_module")
     prep_map = prep_service.build_prep_map("demo_module")
     full_prep = prep_service.build_full_prep("demo_module")
+    draft = prep_service.get_or_create_prep_draft("demo_module")
+    revised = prep_service.revise_prep_draft_section(
+        "demo_module",
+        draft.sections[0].id,
+        "加入一条给新手 KP 的提醒。",
+    )
 
     assert timeline.module_id == "demo_module"
     assert timeline.events
@@ -40,6 +46,9 @@ def test_module_prep_service_builds_timeline_and_summary(tmp_path) -> None:
     assert full_prep.character_count > 0
     assert full_prep.sources
     assert "全文" in full_prep.answer or "预览" in full_prep.answer
+    assert draft.sections
+    assert revised.sections[0].content != draft.sections[0].content
+    assert revised.revision_history
 
 
 def test_module_prep_service_reads_pdf_text(tmp_path) -> None:
