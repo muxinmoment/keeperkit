@@ -5,6 +5,9 @@ from pathlib import Path
 
 from app.rag.document_reader import SUPPORTED_DOCUMENT_SUFFIXES, read_document_text
 from app.schemas.modules import (
+    ModulePrepMapEdge,
+    ModulePrepMapNode,
+    ModulePrepMapResponse,
     ModulePrepSummaryItem,
     ModulePrepSummaryResponse,
     ModuleTimelineEvent,
@@ -18,6 +21,15 @@ NPC_PATTERN = re.compile(r"^(?:NPC|人物|角色)[:：\s]+(.+)$")
 CLUE_PATTERN = re.compile(r"^(?:线索|clue)[:：\s]+(.+)$")
 LOCATION_PATTERN = re.compile(r"^(?:地点|场景|location)[:：\s]+(.+)$")
 TRIGGER_PATTERN = re.compile(r"^(?:触发条件|触发)[:：\s]+(.+)$")
+MAP_KIND_LABELS = {
+    "scene": "场景",
+    "timeline": "时间线",
+    "npc": "NPC",
+    "clue": "线索",
+    "location": "地点",
+    "trigger": "触发",
+    "document": "资料",
+}
 
 
 class ModulePrepService:
@@ -102,6 +114,86 @@ class ModulePrepService:
             warnings=warnings,
         )
 
+    def build_prep_map(self, module_id: str) -> ModulePrepMapResponse:
+        module = self.module_service.get_module(module_id)
+        paths = self.module_service.module_paths(module_id)
+        nodes: dict[str, ModulePrepMapNode] = {
+            "module": ModulePrepMapNode(
+                id="module",
+                label=module.title,
+                kind="module",
+                summary="当前模组的备团总览",
+            )
+        }
+        edges: list[ModulePrepMapEdge] = []
+        warnings: list[str] = []
+        scene_count = 0
+
+        for path in sorted(paths["documents_dir"].rglob("*")):
+            if not path.is_file() or path.suffix.lower() not in SUPPORTED_DOCUMENT_SUFFIXES:
+                continue
+            content = read_document_text(path)
+            lines = iterate_lines(content)
+            if not lines:
+                continue
+
+            source = str(path.relative_to(paths["documents_dir"]))
+            content_type = guess_structure_type(path)
+            scene_count += 1
+            scene_kind = "timeline" if content_type == "timeline" else "scene"
+            scene_id = f"{scene_kind}-{scene_count}"
+            scene_title = make_event_title(path, lines)
+            nodes[scene_id] = ModulePrepMapNode(
+                id=scene_id,
+                label=scene_title,
+                kind=scene_kind,
+                source=source,
+                summary=make_preview(content, limit=96),
+            )
+            edges.append(ModulePrepMapEdge(source_id="module", target_id=scene_id, label=MAP_KIND_LABELS[scene_kind]))
+
+            location = extract_first(LOCATION_PATTERN, lines)
+            if location:
+                location_id = make_node_id("location", location)
+                nodes.setdefault(
+                    location_id,
+                    ModulePrepMapNode(id=location_id, label=location, kind="location", source=source),
+                )
+                edges.append(ModulePrepMapEdge(source_id=scene_id, target_id=location_id, label="发生于"))
+
+            trigger = extract_first(TRIGGER_PATTERN, lines)
+            if trigger:
+                trigger_id = make_node_id("trigger", trigger)
+                nodes.setdefault(
+                    trigger_id,
+                    ModulePrepMapNode(id=trigger_id, label=trigger, kind="trigger", source=source),
+                )
+                edges.append(ModulePrepMapEdge(source_id=trigger_id, target_id=scene_id, label="触发"))
+
+            for npc in extract_many(NPC_PATTERN, lines, limit=8):
+                npc_id = make_node_id("npc", npc)
+                nodes.setdefault(npc_id, ModulePrepMapNode(id=npc_id, label=npc, kind="npc", source=source))
+                edges.append(ModulePrepMapEdge(source_id=scene_id, target_id=npc_id, label="出现"))
+
+            for clue in extract_many(CLUE_PATTERN, lines, limit=8):
+                clue_id = make_node_id("clue", clue)
+                nodes.setdefault(clue_id, ModulePrepMapNode(id=clue_id, label=clue, kind="clue", source=source))
+                edges.append(ModulePrepMapEdge(source_id=scene_id, target_id=clue_id, label="可获得"))
+
+        if len(nodes) <= 1:
+            warnings.append("还没有识别到可绘制的备团结构，先上传模组资料。")
+        elif not any(node.kind == "clue" for node in nodes.values()):
+            warnings.append("地图里还没有线索节点，建议在模组材料中标注“线索：”。")
+        if not any(node.kind == "npc" for node in nodes.values()):
+            warnings.append("地图里还没有 NPC 节点，建议在模组材料中标注“NPC：”或“人物：”。")
+
+        return ModulePrepMapResponse(
+            module_id=module_id,
+            nodes=list(nodes.values()),
+            edges=dedupe_edges(edges),
+            warnings=warnings,
+        )
+
 
 def extract_first(pattern: re.Pattern[str], lines: list[str] | str) -> str | None:
     for line in iterate_lines(lines):
@@ -129,6 +221,32 @@ def extract_many(pattern: re.Pattern[str], lines: list[str] | str, limit: int = 
 
 def make_preview(text: str, limit: int = 140) -> str:
     return text.replace("\n", " ").strip()[:limit]
+
+
+def make_event_title(path: Path, lines: list[str]) -> str:
+    first_line = lines[0].lstrip("# ").strip()
+    if not first_line:
+        return path.stem
+    return first_line[:60]
+
+
+def make_node_id(kind: str, value: str) -> str:
+    normalized = re.sub(r"\W+", "-", value.lower(), flags=re.UNICODE).strip("-")
+    if not normalized:
+        normalized = "item"
+    return f"{kind}-{normalized[:48]}"
+
+
+def dedupe_edges(edges: list[ModulePrepMapEdge]) -> list[ModulePrepMapEdge]:
+    seen: set[tuple[str, str, str]] = set()
+    results: list[ModulePrepMapEdge] = []
+    for edge in edges:
+        key = (edge.source_id, edge.target_id, edge.label)
+        if key in seen:
+            continue
+        seen.add(key)
+        results.append(edge)
+    return results
 
 
 def iterate_lines(lines: list[str] | str) -> list[str]:

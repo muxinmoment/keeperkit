@@ -101,6 +101,27 @@ export type ModulePrepSummaryResponse = {
   warnings: string[];
 };
 
+export type ModulePrepMapNode = {
+  id: string;
+  label: string;
+  kind: string;
+  source?: string | null;
+  summary?: string | null;
+};
+
+export type ModulePrepMapEdge = {
+  source_id: string;
+  target_id: string;
+  label: string;
+};
+
+export type ModulePrepMapResponse = {
+  module_id: string;
+  nodes: ModulePrepMapNode[];
+  edges: ModulePrepMapEdge[];
+  warnings: string[];
+};
+
 export async function listModules(): Promise<ModuleSummary[]> {
   const response = await fetch(`${API_BASE_URL}/api/v1/modules`);
   if (!response.ok) {
@@ -186,6 +207,14 @@ export async function getModuleTimeline(moduleId: string): Promise<ModuleTimelin
 
 export async function getModulePrepSummary(moduleId: string): Promise<ModulePrepSummaryResponse> {
   const response = await fetch(`${API_BASE_URL}/api/v1/modules/${moduleId}/prep-summary`);
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+  return response.json();
+}
+
+export async function getModulePrepMap(moduleId: string): Promise<ModulePrepMapResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/modules/${moduleId}/prep-map`);
   if (!response.ok) {
     throw new Error(await getErrorMessage(response));
   }

@@ -4,12 +4,14 @@ import {
   askModule,
   createModule,
   deleteModule,
+  getModulePrepMap,
   getModulePrepSummary,
   getModuleStructure,
   getModuleTimeline,
   ingestModule,
   listModules,
   type ModuleSource,
+  type ModulePrepMapResponse,
   type ModulePrepSummaryResponse,
   type ModuleStructureResponse,
   type ModuleTimelineResponse,
@@ -47,6 +49,7 @@ export function ModuleWorkbench() {
   const [structure, setStructure] = useState<ModuleStructureResponse | null>(null);
   const [timeline, setTimeline] = useState<ModuleTimelineResponse | null>(null);
   const [prepSummary, setPrepSummary] = useState<ModulePrepSummaryResponse | null>(null);
+  const [prepMap, setPrepMap] = useState<ModulePrepMapResponse | null>(null);
   const [prepAiBrief, setPrepAiBrief] = useState<string | null>(null);
   const [status, setStatus] = useState("Ready");
   const [error, setError] = useState<string | null>(null);
@@ -67,6 +70,7 @@ export function ModuleWorkbench() {
       setStructure(null);
       setTimeline(null);
       setPrepSummary(null);
+      setPrepMap(null);
       setPrepAiBrief(null);
       return;
     }
@@ -99,8 +103,14 @@ export function ModuleWorkbench() {
 
   async function refreshPrepArtifacts(moduleId: string) {
     try {
-      setTimeline(await getModuleTimeline(moduleId));
-      setPrepSummary(await getModulePrepSummary(moduleId));
+      const [nextTimeline, nextPrepSummary, nextPrepMap] = await Promise.all([
+        getModuleTimeline(moduleId),
+        getModulePrepSummary(moduleId),
+        getModulePrepMap(moduleId)
+      ]);
+      setTimeline(nextTimeline);
+      setPrepSummary(nextPrepSummary);
+      setPrepMap(nextPrepMap);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Unknown request error");
     }
@@ -173,6 +183,7 @@ export function ModuleWorkbench() {
       setStructure(null);
       setTimeline(null);
       setPrepSummary(null);
+      setPrepMap(null);
       setPrepAiBrief(null);
       setStructureCount(0);
       setSelectedModuleId("");
@@ -364,6 +375,7 @@ export function ModuleWorkbench() {
               canGenerateAiBrief={Boolean(selectedModuleId)}
               isLoading={isBusy}
               onGenerateAiBrief={handleGeneratePrepBrief}
+              prepMap={prepMap}
               summary={prepSummary}
               timeline={timeline}
             />

@@ -1,8 +1,10 @@
-import type { ModulePrepSummaryResponse, ModuleTimelineResponse } from "../api/modules";
+import type { ModulePrepMapResponse, ModulePrepSummaryResponse, ModuleTimelineResponse } from "../api/modules";
+import { ModulePrepMap } from "./ModulePrepMap";
 
 type Props = {
   summary: ModulePrepSummaryResponse | null;
   timeline: ModuleTimelineResponse | null;
+  prepMap: ModulePrepMapResponse | null;
   isLoading: boolean;
   aiBrief: string | null;
   canGenerateAiBrief: boolean;
@@ -12,6 +14,7 @@ type Props = {
 export function ModulePrepPanel({
   summary,
   timeline,
+  prepMap,
   isLoading,
   aiBrief,
   canGenerateAiBrief,
@@ -35,6 +38,20 @@ export function ModulePrepPanel({
       {!isLoading && !summary && !timeline ? (
         <p className="sources__empty">还没有备团信息，先上传并建立索引。</p>
       ) : null}
+
+      {prepMap?.warnings.length ? (
+        <div className="prep-block">
+          <strong>地图提醒</strong>
+          {prepMap.warnings.map((warning) => (
+            <p key={warning}>{warning}</p>
+          ))}
+        </div>
+      ) : null}
+
+      <div className="prep-block prep-block--map">
+        <strong>备团结构地图</strong>
+        <ModulePrepMap prepMap={prepMap} />
+      </div>
 
       {aiBrief ? (
         <div className="prep-block prep-block--ai">

@@ -11,14 +11,14 @@ export function ModuleStructurePanel({ structure, isLoading }: Props) {
     <section className="structure-panel">
       <div className="structure-panel__header">
         <div>
-          <p className="eyebrow">V1.1 Structure</p>
-          <h2>模组结构视图</h2>
+          <p className="eyebrow">V1.1 Material Index</p>
+          <h2>资料索引</h2>
         </div>
         <span>{countItems(structure)} / {totalGroups}</span>
       </div>
       {isLoading ? <p className="sources__empty">正在读取结构...</p> : null}
       {!isLoading && (!structure || structure.groups.length === 0) ? (
-        <p className="sources__empty">还没有结构信息。先上传模组资料。</p>
+        <p className="sources__empty">还没有资料索引。先上传模组资料。</p>
       ) : null}
       {structure?.groups.map((group) => (
         <div className="structure-group" key={group.content_type}>

@@ -20,6 +20,7 @@ def test_module_prep_service_builds_timeline_and_summary(tmp_path) -> None:
     prep_service = ModulePrepService(service)
     timeline = prep_service.build_timeline("demo_module")
     summary = prep_service.build_prep_summary("demo_module")
+    prep_map = prep_service.build_prep_map("demo_module")
 
     assert timeline.module_id == "demo_module"
     assert timeline.events
@@ -29,6 +30,11 @@ def test_module_prep_service_builds_timeline_and_summary(tmp_path) -> None:
     assert summary.highlights
     assert summary.clues
     assert summary.npcs
+    assert prep_map.module_id == "demo_module"
+    assert any(node.kind == "scene" for node in prep_map.nodes)
+    assert any(node.kind == "npc" and node.label == "教授" for node in prep_map.nodes)
+    assert any(node.kind == "clue" and node.label == "日记" for node in prep_map.nodes)
+    assert any(edge.label == "可获得" for edge in prep_map.edges)
 
 
 def test_module_prep_service_reads_pdf_text(tmp_path) -> None:

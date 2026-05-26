@@ -111,3 +111,24 @@ class ModulePrepSummaryResponse(BaseModel):
     clues: list[ModulePrepSummaryItem]
     npcs: list[ModulePrepSummaryItem]
     warnings: list[str] = Field(default_factory=list)
+
+
+class ModulePrepMapNode(BaseModel):
+    id: str
+    label: str
+    kind: str
+    source: str | None = None
+    summary: str | None = None
+
+
+class ModulePrepMapEdge(BaseModel):
+    source_id: str
+    target_id: str
+    label: str
+
+
+class ModulePrepMapResponse(BaseModel):
+    module_id: str
+    nodes: list[ModulePrepMapNode]
+    edges: list[ModulePrepMapEdge]
+    warnings: list[str] = Field(default_factory=list)
