@@ -50,6 +50,20 @@ class ModuleService:
         module_dir = self._module_dir(module_id)
         return self._read_metadata(module_dir) is not None
 
+    def delete_module(self, module_id: str) -> None:
+        module_dir = self._module_dir(module_id)
+        if self._read_metadata(module_dir) is None:
+            raise FileNotFoundError(f"Module not found: {module_id}")
+        for path in sorted(module_dir.rglob("*"), reverse=True):
+            if path.is_file():
+                path.unlink()
+            elif path.is_dir():
+                try:
+                    path.rmdir()
+                except OSError:
+                    continue
+        module_dir.rmdir()
+
     def save_document(self, module_id: str, filename: str, content: bytes) -> Path:
         self.get_module(module_id)
         safe_name = sanitize_filename(filename)

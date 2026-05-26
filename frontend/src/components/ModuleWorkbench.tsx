@@ -3,6 +3,7 @@ import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import {
   askModule,
   createModule,
+  deleteModule,
   getModuleStructure,
   ingestModule,
   listModules,
@@ -31,6 +32,7 @@ export function ModuleWorkbench() {
   const [structure, setStructure] = useState<ModuleStructureResponse | null>(null);
   const [status, setStatus] = useState("Ready");
   const [error, setError] = useState<string | null>(null);
+  const [structureCount, setStructureCount] = useState(0);
 
   const selectedModule = useMemo(
     () => modules.find((item) => item.id === selectedModuleId) ?? null,
@@ -63,7 +65,9 @@ export function ModuleWorkbench() {
 
   async function refreshStructure(moduleId: string) {
     try {
-      setStructure(await getModuleStructure(moduleId));
+      const nextStructure = await getModuleStructure(moduleId);
+      setStructure(nextStructure);
+      setStructureCount(nextStructure.groups.reduce((total, group) => total + group.items.length, 0));
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Unknown request error");
     }
@@ -117,6 +121,27 @@ export function ModuleWorkbench() {
     });
   }
 
+  async function handleDeleteModule() {
+    if (!selectedModuleId) {
+      return;
+    }
+
+    const confirmed = window.confirm(`确定删除模组「${selectedModule?.title ?? selectedModuleId}」吗？`);
+    if (!confirmed) {
+      return;
+    }
+
+    await runTask("Deleting", async () => {
+      await deleteModule(selectedModuleId);
+      setMessages([]);
+      setSources([]);
+      setStructure(null);
+      setStructureCount(0);
+      setSelectedModuleId("");
+      await refreshModules();
+    });
+  }
+
   async function handleAsk(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const trimmed = question.trim();
@@ -153,8 +178,8 @@ export function ModuleWorkbench() {
     <main className="workbench">
       <aside className="module-nav">
         <div className="module-nav__header">
-          <p className="eyebrow">KeeperKit Modules</p>
-          <h1>备团工作台</h1>
+          <p className="eyebrow">KeeperKit V1.1</p>
+          <h1>模组结构工作台</h1>
           <span className="endpoint">{API_BASE_URL}</span>
         </div>
 
@@ -184,7 +209,7 @@ export function ModuleWorkbench() {
                 <strong>{module.title}</strong>
                 <span>{module.id}</span>
                 <small>
-                  {module.document_count} files / {module.index_ready ? "indexed" : "not indexed"}
+                  {module.document_count} files / {module.index_ready ? "indexed" : "not indexed"} / {module.has_documents ? "ready" : "empty"}
                 </small>
               </button>
             ))
@@ -196,8 +221,13 @@ export function ModuleWorkbench() {
         <section className="console">
           <div className="console__header">
             <div>
-              <p className="eyebrow">Module QA</p>
+              <p className="eyebrow">Module QA / Structure</p>
               <h2>{selectedModule?.title ?? "选择一个模组"}</h2>
+              {selectedModule ? (
+                <p className="module-stats">
+                  {selectedModule.document_count} files / {selectedModule.index_ready ? "indexed" : "not indexed"} / {structureCount} items
+                </p>
+              ) : null}
             </div>
             <div className="console__status">
               <span className="status">{status}</span>
@@ -207,6 +237,9 @@ export function ModuleWorkbench() {
               </label>
               <button className="ghost-button" disabled={!selectedModuleId} onClick={handleIngest} type="button">
                 建立索引
+              </button>
+              <button className="delete-button" disabled={!selectedModuleId} onClick={handleDeleteModule} type="button">
+                删除模组
               </button>
             </div>
           </div>

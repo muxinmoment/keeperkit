@@ -68,6 +68,13 @@ input {
   line-height: 1.1;
 }
 
+.module-stats {
+  margin: 10px 0 0;
+  color: #cdbf99;
+  font-family: "Courier New", monospace;
+  font-size: 13px;
+}
+
 .module-form {
   display: grid;
   gap: 12px;
@@ -86,7 +93,8 @@ input {
 .module-form button,
 .module-card,
 .ghost-button,
-.upload-button {
+.upload-button,
+.delete-button {
   border: 1px solid rgba(216, 196, 142, 0.28);
   color: #f0ead8;
   background: rgba(4, 9, 8, 0.82);
@@ -99,7 +107,8 @@ input {
 
 .module-form button,
 .ghost-button,
-.upload-button {
+.upload-button,
+.delete-button {
   min-height: 40px;
   cursor: pointer;
 }
@@ -152,6 +161,13 @@ input {
 .ghost-button {
   min-width: 96px;
   padding: 10px 12px;
+}
+
+.delete-button {
+  min-width: 96px;
+  padding: 10px 12px;
+  color: #ffb4a6;
+  border-color: rgba(255, 180, 166, 0.4);
 }
 
 .console {
@@ -393,7 +409,12 @@ h2 {
   margin: 0;
   color: #d8c48e;
   font-family: "Courier New", monospace;
-  font-size: 18px;
+  font-size: 16px;
+}
+
+.structure-panel .eyebrow {
+  margin-bottom: 6px;
+  font-size: 12px;
 }
 
 .structure-group {

@@ -91,6 +91,15 @@ export async function createModule(request: ModuleCreateRequest): Promise<Module
   return response.json();
 }
 
+export async function deleteModule(moduleId: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/modules/${moduleId}`, {
+    method: "DELETE"
+  });
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+}
+
 export async function uploadModuleDocument(moduleId: string, file: File): Promise<void> {
   const formData = new FormData();
   formData.append("file", file);

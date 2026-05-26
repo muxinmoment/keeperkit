@@ -43,3 +43,12 @@ def test_module_service_saves_supported_document(tmp_path) -> None:
 
     assert saved_path.name == "scene.md"
     assert saved_path.read_text(encoding="utf-8") == "# 场景"
+
+
+def test_module_service_deletes_module(tmp_path) -> None:
+    service = ModuleService(modules_dir=tmp_path)
+    service.create_module(ModuleCreateRequest(id="demo_module", title="演示模组"))
+
+    service.delete_module("demo_module")
+
+    assert not (tmp_path / "demo_module").exists()

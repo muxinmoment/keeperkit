@@ -6,11 +6,15 @@ type Props = {
 };
 
 export function ModuleStructurePanel({ structure, isLoading }: Props) {
+  const totalGroups = structure?.groups.length ?? 0;
   return (
     <section className="structure-panel">
       <div className="structure-panel__header">
-        <h2>模组结构</h2>
-        <span>{countItems(structure)}</span>
+        <div>
+          <p className="eyebrow">V1.1 Structure</p>
+          <h2>模组结构视图</h2>
+        </div>
+        <span>{countItems(structure)} / {totalGroups}</span>
       </div>
       {isLoading ? <p className="sources__empty">正在读取结构...</p> : null}
       {!isLoading && (!structure || structure.groups.length === 0) ? (

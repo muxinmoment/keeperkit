@@ -41,6 +41,14 @@ def get_module(module_id: str) -> ModuleDetail:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
+@router.delete("/{module_id}", status_code=204)
+def delete_module(module_id: str) -> None:
+    try:
+        service.delete_module(module_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
 @router.post("/{module_id}/upload", response_model=ModuleUploadResponse)
 async def upload_module_document(module_id: str, file: UploadFile = File(...)) -> ModuleUploadResponse:
     if not file.filename:
