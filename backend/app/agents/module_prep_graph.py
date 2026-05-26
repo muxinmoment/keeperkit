@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import AbstractContextManager
 from typing import Literal, TypedDict
 
 from langgraph.checkpoint.memory import MemorySaver
@@ -22,6 +23,7 @@ class PrepDraftGraphState(TypedDict, total=False):
 
 
 _POSTGRES_CHECKPOINTER: PostgresSaver | None = None
+_POSTGRES_CHECKPOINTER_CONTEXT: AbstractContextManager[PostgresSaver] | None = None
 
 
 def create_module_prep_graph(generator: ModuleGenerator):
@@ -90,13 +92,13 @@ def create_checkpointer():
 
 
 def get_postgres_checkpointer() -> PostgresSaver:
-    global _POSTGRES_CHECKPOINTER
+    global _POSTGRES_CHECKPOINTER, _POSTGRES_CHECKPOINTER_CONTEXT
     if _POSTGRES_CHECKPOINTER is not None:
         return _POSTGRES_CHECKPOINTER
     if not settings.langgraph_postgres_uri:
         raise ValueError("LANGGRAPH_POSTGRES_URI is required when LANGGRAPH_CHECKPOINTER=postgres.")
-    context = PostgresSaver.from_conn_string(settings.langgraph_postgres_uri)
-    saver = context.__enter__()
+    _POSTGRES_CHECKPOINTER_CONTEXT = PostgresSaver.from_conn_string(settings.langgraph_postgres_uri)
+    saver = _POSTGRES_CHECKPOINTER_CONTEXT.__enter__()
     saver.setup()
     _POSTGRES_CHECKPOINTER = saver
     return saver
