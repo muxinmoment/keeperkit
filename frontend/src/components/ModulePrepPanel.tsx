@@ -14,7 +14,7 @@ export function ModulePrepPanel({ summary, timeline, isLoading }: Props) {
           <p className="eyebrow">V1.2 Prep</p>
           <h2>备团助手</h2>
         </div>
-        <span>{timeline?.events.length ?? 0}</span>
+        <span>{timeline?.events.length ?? 0} events</span>
       </div>
       {isLoading ? <p className="sources__empty">正在整理备团信息...</p> : null}
       {!isLoading && !summary && !timeline ? (

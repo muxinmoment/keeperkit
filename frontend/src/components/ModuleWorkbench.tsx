@@ -201,8 +201,8 @@ export function ModuleWorkbench() {
     <main className="workbench">
       <aside className="module-nav">
         <div className="module-nav__header">
-          <p className="eyebrow">KeeperKit V1.1</p>
-          <h1>模组结构工作台</h1>
+          <p className="eyebrow">KeeperKit V1.2</p>
+          <h1>备团工作台</h1>
           <span className="endpoint">{API_BASE_URL}</span>
         </div>
 
@@ -244,11 +244,11 @@ export function ModuleWorkbench() {
         <section className="console">
           <div className="console__header">
             <div>
-              <p className="eyebrow">Module QA / Structure</p>
+              <p className="eyebrow">Module QA / Structure / Prep</p>
               <h2>{selectedModule?.title ?? "选择一个模组"}</h2>
               {selectedModule ? (
                 <p className="module-stats">
-                  {selectedModule.document_count} files / {selectedModule.index_ready ? "indexed" : "not indexed"} / {structureCount} items
+                  {selectedModule.document_count} files / {selectedModule.index_ready ? "indexed" : "not indexed"} / {structureCount} items / prep ready
                 </p>
               ) : null}
             </div>

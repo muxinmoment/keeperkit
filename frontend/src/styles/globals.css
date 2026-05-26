@@ -474,6 +474,13 @@ h2 {
   font-size: 16px;
 }
 
+.prep-panel__header h2 {
+  margin: 0;
+  color: #d8c48e;
+  font-family: "Courier New", monospace;
+  font-size: 22px;
+}
+
 .structure-panel .eyebrow {
   margin-bottom: 6px;
   font-size: 12px;
