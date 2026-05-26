@@ -6,11 +6,14 @@ from app.schemas.modules import (
     ModuleCreateRequest,
     ModuleDetail,
     ModuleIngestResponse,
+    ModulePrepSummaryResponse,
+    ModuleTimelineResponse,
     ModuleSummary,
     ModuleUploadResponse,
     ModuleStructureResponse,
 )
 from app.services.module_ingest_service import ModuleIngestService
+from app.services.module_prep_service import ModulePrepService
 from app.services.module_service import ModuleService
 from app.services.module_qa_service import ModuleQAService
 from app.services.module_structure_service import ModuleStructureService
@@ -21,6 +24,7 @@ service = ModuleService()
 ingest_service = ModuleIngestService(service)
 qa_service = ModuleQAService(service)
 structure_service = ModuleStructureService(service)
+prep_service = ModulePrepService(service)
 
 
 @router.get("", response_model=list[ModuleSummary])
@@ -86,5 +90,21 @@ def ask_module(module_id: str, request: ModuleAskRequest) -> ModuleAskResponse:
 def get_module_structure(module_id: str) -> ModuleStructureResponse:
     try:
         return structure_service.inspect(module_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.get("/{module_id}/timeline", response_model=ModuleTimelineResponse)
+def get_module_timeline(module_id: str) -> ModuleTimelineResponse:
+    try:
+        return prep_service.build_timeline(module_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.get("/{module_id}/prep-summary", response_model=ModulePrepSummaryResponse)
+def get_module_prep_summary(module_id: str) -> ModulePrepSummaryResponse:
+    try:
+        return prep_service.build_prep_summary(module_id)
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc

@@ -79,3 +79,35 @@ class ModuleStructureGroup(BaseModel):
 class ModuleStructureResponse(BaseModel):
     module_id: str
     groups: list[ModuleStructureGroup]
+
+
+class ModuleTimelineEvent(BaseModel):
+    order: int
+    title: str
+    source: str
+    content_type: str
+    location: str | None = None
+    npcs: list[str] = Field(default_factory=list)
+    clues: list[str] = Field(default_factory=list)
+    trigger: str | None = None
+    preview: str
+
+
+class ModuleTimelineResponse(BaseModel):
+    module_id: str
+    events: list[ModuleTimelineEvent]
+
+
+class ModulePrepSummaryItem(BaseModel):
+    title: str
+    content_type: str
+    source: str
+    preview: str
+
+
+class ModulePrepSummaryResponse(BaseModel):
+    module_id: str
+    highlights: list[ModulePrepSummaryItem]
+    clues: list[ModulePrepSummaryItem]
+    npcs: list[ModulePrepSummaryItem]
+    warnings: list[str] = Field(default_factory=list)

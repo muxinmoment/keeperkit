@@ -390,6 +390,68 @@ h2 {
   padding: 20px;
 }
 
+.prep-panel {
+  padding: 20px;
+  border: 1px solid rgba(216, 196, 142, 0.24);
+  background: rgba(6, 13, 11, 0.74);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+}
+
+.prep-panel__header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.prep-block {
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(216, 196, 142, 0.18);
+}
+
+.prep-block strong {
+  color: #d8c48e;
+  font-family: "Courier New", monospace;
+  font-size: 16px;
+}
+
+.prep-item,
+.timeline-item {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid rgba(216, 196, 142, 0.16);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.prep-item span,
+.timeline-item__meta span {
+  color: #f0ead8;
+  font-family: "Courier New", monospace;
+}
+
+.prep-item small,
+.timeline-item__meta small {
+  color: #9dd6b5;
+  font-family: "Courier New", monospace;
+}
+
+.prep-item p,
+.timeline-item p {
+  margin: 0;
+  color: #cdbf99;
+  line-height: 1.55;
+}
+
+.timeline-item__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .structure-panel__header,
 .structure-group__title {
   display: flex;

@@ -69,6 +69,38 @@ export type ModuleStructureResponse = {
   groups: ModuleStructureGroup[];
 };
 
+export type ModuleTimelineEvent = {
+  order: number;
+  title: string;
+  source: string;
+  content_type: string;
+  location?: string | null;
+  npcs: string[];
+  clues: string[];
+  trigger?: string | null;
+  preview: string;
+};
+
+export type ModuleTimelineResponse = {
+  module_id: string;
+  events: ModuleTimelineEvent[];
+};
+
+export type ModulePrepSummaryItem = {
+  title: string;
+  content_type: string;
+  source: string;
+  preview: string;
+};
+
+export type ModulePrepSummaryResponse = {
+  module_id: string;
+  highlights: ModulePrepSummaryItem[];
+  clues: ModulePrepSummaryItem[];
+  npcs: ModulePrepSummaryItem[];
+  warnings: string[];
+};
+
 export async function listModules(): Promise<ModuleSummary[]> {
   const response = await fetch(`${API_BASE_URL}/api/v1/modules`);
   if (!response.ok) {
@@ -138,6 +170,22 @@ export async function askModule(moduleId: string, request: ModuleAskRequest): Pr
 
 export async function getModuleStructure(moduleId: string): Promise<ModuleStructureResponse> {
   const response = await fetch(`${API_BASE_URL}/api/v1/modules/${moduleId}/structure`);
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+  return response.json();
+}
+
+export async function getModuleTimeline(moduleId: string): Promise<ModuleTimelineResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/modules/${moduleId}/timeline`);
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+  return response.json();
+}
+
+export async function getModulePrepSummary(moduleId: string): Promise<ModulePrepSummaryResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/modules/${moduleId}/prep-summary`);
   if (!response.ok) {
     throw new Error(await getErrorMessage(response));
   }

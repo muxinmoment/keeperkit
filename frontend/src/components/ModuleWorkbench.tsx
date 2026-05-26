@@ -4,15 +4,20 @@ import {
   askModule,
   createModule,
   deleteModule,
+  getModulePrepSummary,
   getModuleStructure,
+  getModuleTimeline,
   ingestModule,
   listModules,
   type ModuleSource,
+  type ModulePrepSummaryResponse,
   type ModuleStructureResponse,
+  type ModuleTimelineResponse,
   type ModuleSummary,
   uploadModuleDocument
 } from "../api/modules";
 import { API_BASE_URL } from "../api/rules";
+import { ModulePrepPanel } from "./ModulePrepPanel";
 import { ModuleStructurePanel } from "./ModuleStructurePanel";
 import { SourceList } from "./SourceList";
 
@@ -30,6 +35,8 @@ export function ModuleWorkbench() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [sources, setSources] = useState<ModuleSource[]>([]);
   const [structure, setStructure] = useState<ModuleStructureResponse | null>(null);
+  const [timeline, setTimeline] = useState<ModuleTimelineResponse | null>(null);
+  const [prepSummary, setPrepSummary] = useState<ModulePrepSummaryResponse | null>(null);
   const [status, setStatus] = useState("Ready");
   const [error, setError] = useState<string | null>(null);
   const [structureCount, setStructureCount] = useState(0);
@@ -46,9 +53,12 @@ export function ModuleWorkbench() {
   useEffect(() => {
     if (!selectedModuleId) {
       setStructure(null);
+      setTimeline(null);
+      setPrepSummary(null);
       return;
     }
     void refreshStructure(selectedModuleId);
+    void refreshPrepArtifacts(selectedModuleId);
   }, [selectedModuleId]);
 
   async function refreshModules(nextSelectedId?: string) {
@@ -68,6 +78,15 @@ export function ModuleWorkbench() {
       const nextStructure = await getModuleStructure(moduleId);
       setStructure(nextStructure);
       setStructureCount(nextStructure.groups.reduce((total, group) => total + group.items.length, 0));
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Unknown request error");
+    }
+  }
+
+  async function refreshPrepArtifacts(moduleId: string) {
+    try {
+      setTimeline(await getModuleTimeline(moduleId));
+      setPrepSummary(await getModulePrepSummary(moduleId));
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Unknown request error");
     }
@@ -105,6 +124,7 @@ export function ModuleWorkbench() {
       await uploadModuleDocument(selectedModuleId, file);
       await refreshModules(selectedModuleId);
       await refreshStructure(selectedModuleId);
+      await refreshPrepArtifacts(selectedModuleId);
     });
   }
 
@@ -118,6 +138,7 @@ export function ModuleWorkbench() {
       await ingestModule(selectedModuleId);
       await refreshModules(selectedModuleId);
       await refreshStructure(selectedModuleId);
+      await refreshPrepArtifacts(selectedModuleId);
     });
   }
 
@@ -136,6 +157,8 @@ export function ModuleWorkbench() {
       setMessages([]);
       setSources([]);
       setStructure(null);
+      setTimeline(null);
+      setPrepSummary(null);
       setStructureCount(0);
       setSelectedModuleId("");
       await refreshModules();
@@ -275,6 +298,7 @@ export function ModuleWorkbench() {
           </form>
         </section>
 
+        <ModulePrepPanel isLoading={status !== "Ready"} summary={prepSummary} timeline={timeline} />
         <ModuleStructurePanel isLoading={status !== "Ready"} structure={structure} />
       </section>
 
