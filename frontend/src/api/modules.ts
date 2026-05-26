@@ -50,6 +50,25 @@ export type ModuleIngestResponse = {
   index_dir: string;
 };
 
+export type ModuleStructureItem = {
+  label: string;
+  source: string;
+  title_path: string[];
+  content_type: string;
+  preview: string;
+};
+
+export type ModuleStructureGroup = {
+  content_type: string;
+  label: string;
+  items: ModuleStructureItem[];
+};
+
+export type ModuleStructureResponse = {
+  module_id: string;
+  groups: ModuleStructureGroup[];
+};
+
 export async function listModules(): Promise<ModuleSummary[]> {
   const response = await fetch(`${API_BASE_URL}/api/v1/modules`);
   if (!response.ok) {
@@ -102,6 +121,14 @@ export async function askModule(moduleId: string, request: ModuleAskRequest): Pr
     },
     body: JSON.stringify(request)
   });
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+  return response.json();
+}
+
+export async function getModuleStructure(moduleId: string): Promise<ModuleStructureResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/modules/${moduleId}/structure`);
   if (!response.ok) {
     throw new Error(await getErrorMessage(response));
   }

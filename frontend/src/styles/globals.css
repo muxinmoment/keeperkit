@@ -46,10 +46,16 @@ input {
 
 .console,
 .sources,
-.module-nav {
+.module-nav,
+.structure-panel {
   border: 1px solid rgba(216, 196, 142, 0.24);
   background: rgba(6, 13, 11, 0.74);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+}
+
+.center-stack {
+  display: grid;
+  gap: 20px;
 }
 
 .module-nav {
@@ -360,6 +366,74 @@ h2 {
 }
 
 .source small {
+  color: #cdbf99;
+  line-height: 1.55;
+}
+
+.structure-panel {
+  padding: 20px;
+}
+
+.structure-panel__header,
+.structure-group__title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.structure-panel__header {
+  margin-bottom: 16px;
+}
+
+.structure-panel__header h2,
+.structure-panel__header span,
+.structure-group__title strong,
+.structure-group__title span {
+  margin: 0;
+  color: #d8c48e;
+  font-family: "Courier New", monospace;
+  font-size: 18px;
+}
+
+.structure-group {
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(216, 196, 142, 0.18);
+}
+
+.structure-group + .structure-group {
+  margin-top: 16px;
+}
+
+.structure-item {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(216, 196, 142, 0.16);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.structure-item div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.structure-item strong {
+  color: #f0ead8;
+}
+
+.structure-item span {
+  color: #9dd6b5;
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+}
+
+.structure-item p {
+  margin: 0;
   color: #cdbf99;
   line-height: 1.55;
 }

@@ -3,13 +3,16 @@ import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import {
   askModule,
   createModule,
+  getModuleStructure,
   ingestModule,
   listModules,
   type ModuleSource,
+  type ModuleStructureResponse,
   type ModuleSummary,
   uploadModuleDocument
 } from "../api/modules";
 import { API_BASE_URL } from "../api/rules";
+import { ModuleStructurePanel } from "./ModuleStructurePanel";
 import { SourceList } from "./SourceList";
 
 type Message = {
@@ -25,6 +28,7 @@ export function ModuleWorkbench() {
   const [question, setQuestion] = useState("这个模组的开场场景是什么？");
   const [messages, setMessages] = useState<Message[]>([]);
   const [sources, setSources] = useState<ModuleSource[]>([]);
+  const [structure, setStructure] = useState<ModuleStructureResponse | null>(null);
   const [status, setStatus] = useState("Ready");
   const [error, setError] = useState<string | null>(null);
 
@@ -37,6 +41,14 @@ export function ModuleWorkbench() {
     void refreshModules();
   }, []);
 
+  useEffect(() => {
+    if (!selectedModuleId) {
+      setStructure(null);
+      return;
+    }
+    void refreshStructure(selectedModuleId);
+  }, [selectedModuleId]);
+
   async function refreshModules(nextSelectedId?: string) {
     const nextModules = await listModules();
     setModules(nextModules);
@@ -46,6 +58,14 @@ export function ModuleWorkbench() {
     }
     if (!selectedModuleId && nextModules.length > 0) {
       setSelectedModuleId(nextModules[0].id);
+    }
+  }
+
+  async function refreshStructure(moduleId: string) {
+    try {
+      setStructure(await getModuleStructure(moduleId));
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Unknown request error");
     }
   }
 
@@ -80,6 +100,7 @@ export function ModuleWorkbench() {
     await runTask("Uploading", async () => {
       await uploadModuleDocument(selectedModuleId, file);
       await refreshModules(selectedModuleId);
+      await refreshStructure(selectedModuleId);
     });
   }
 
@@ -92,6 +113,7 @@ export function ModuleWorkbench() {
     await runTask("Indexing", async () => {
       await ingestModule(selectedModuleId);
       await refreshModules(selectedModuleId);
+      await refreshStructure(selectedModuleId);
     });
   }
 
@@ -170,53 +192,57 @@ export function ModuleWorkbench() {
         </div>
       </aside>
 
-      <section className="console">
-        <div className="console__header">
-          <div>
-            <p className="eyebrow">Module QA</p>
-            <h2>{selectedModule?.title ?? "选择一个模组"}</h2>
-          </div>
-          <div className="console__status">
-            <span className="status">{status}</span>
-            <label className="upload-button">
-              上传资料
-              <input accept=".md,.markdown,.txt,.pdf" disabled={!selectedModuleId} onChange={handleUpload} type="file" />
-            </label>
-            <button className="ghost-button" disabled={!selectedModuleId} onClick={handleIngest} type="button">
-              建立索引
-            </button>
-          </div>
-        </div>
-
-        <div className="messages">
-          {messages.length === 0 ? (
-            <div className="empty">
-              <p>创建模组、上传资料、建立索引后，就可以围绕当前模组提问。</p>
+      <section className="center-stack">
+        <section className="console">
+          <div className="console__header">
+            <div>
+              <p className="eyebrow">Module QA</p>
+              <h2>{selectedModule?.title ?? "选择一个模组"}</h2>
             </div>
-          ) : (
-            messages.map((message, index) => (
-              <article className={`message message--${message.role}`} key={`${message.role}-${index}`}>
-                <span>{message.role === "user" ? "You" : "Assistant"}</span>
-                <p>{message.content}</p>
-              </article>
-            ))
-          )}
-          {error ? <p className="error">{error}</p> : null}
-        </div>
-
-        <form className="prompt" onSubmit={handleAsk}>
-          <div className="prompt__row">
-            <input
-              disabled={!selectedModuleId}
-              onChange={(event) => setQuestion(event.target.value)}
-              placeholder="围绕当前模组提问"
-              value={question}
-            />
-            <button disabled={!selectedModuleId || status !== "Ready"} type="submit">
-              Ask
-            </button>
+            <div className="console__status">
+              <span className="status">{status}</span>
+              <label className="upload-button">
+                上传资料
+                <input accept=".md,.markdown,.txt,.pdf" disabled={!selectedModuleId} onChange={handleUpload} type="file" />
+              </label>
+              <button className="ghost-button" disabled={!selectedModuleId} onClick={handleIngest} type="button">
+                建立索引
+              </button>
+            </div>
           </div>
-        </form>
+
+          <div className="messages">
+            {messages.length === 0 ? (
+              <div className="empty">
+                <p>创建模组、上传资料、建立索引后，就可以围绕当前模组提问。</p>
+              </div>
+            ) : (
+              messages.map((message, index) => (
+                <article className={`message message--${message.role}`} key={`${message.role}-${index}`}>
+                  <span>{message.role === "user" ? "You" : "Assistant"}</span>
+                  <p>{message.content}</p>
+                </article>
+              ))
+            )}
+            {error ? <p className="error">{error}</p> : null}
+          </div>
+
+          <form className="prompt" onSubmit={handleAsk}>
+            <div className="prompt__row">
+              <input
+                disabled={!selectedModuleId}
+                onChange={(event) => setQuestion(event.target.value)}
+                placeholder="围绕当前模组提问"
+                value={question}
+              />
+              <button disabled={!selectedModuleId || status !== "Ready"} type="submit">
+                Ask
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <ModuleStructurePanel isLoading={status !== "Ready"} structure={structure} />
       </section>
 
       <SourceList isLoading={status !== "Ready"} sources={sources} />
