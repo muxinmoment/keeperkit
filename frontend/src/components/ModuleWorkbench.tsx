@@ -246,7 +246,7 @@ export function ModuleWorkbench() {
       const response = await getModulePrepDraft(selectedModuleId);
       setPrepAiBrief(response.answer);
       setPrepAiBriefMeta(
-        `${response.document_count} files / ${response.character_count} chars / draft state`
+        `${response.document_count} files / ${response.character_count} chars / thread ${shortThreadId(response.thread_id)}`
       );
       setPrepAiBriefSections(response.sections);
       setSources(response.sources);
@@ -262,7 +262,7 @@ export function ModuleWorkbench() {
     await runTask("Saving Prep", async () => {
       const response = await updateModulePrepDraft(selectedModuleId, sections);
       setPrepAiBrief(response.answer);
-      setPrepAiBriefMeta(`${response.document_count} files / ${response.character_count} chars / saved draft`);
+      setPrepAiBriefMeta(`${response.document_count} files / ${response.character_count} chars / saved ${shortThreadId(response.thread_id)}`);
       setPrepAiBriefSections(response.sections);
       setSources(response.sources);
     });
@@ -277,7 +277,7 @@ export function ModuleWorkbench() {
     await runTask("Revising Prep", async () => {
       const response = await reviseModulePrepSection(selectedModuleId, sectionId, instruction);
       setPrepAiBrief(response.answer);
-      setPrepAiBriefMeta(`${response.document_count} files / ${response.character_count} chars / graph draft`);
+      setPrepAiBriefMeta(`${response.document_count} files / ${response.character_count} chars / graph ${shortThreadId(response.thread_id)}`);
       setPrepAiBriefSections(response.sections);
       setSources(response.sources);
     });
@@ -478,4 +478,11 @@ function isMessage(value: unknown): value is Message {
   }
   const candidate = value as Partial<Message>;
   return (candidate.role === "user" || candidate.role === "assistant") && typeof candidate.content === "string";
+}
+
+function shortThreadId(threadId?: string | null): string {
+  if (!threadId) {
+    return "draft";
+  }
+  return threadId.slice(0, 8);
 }

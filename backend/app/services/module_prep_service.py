@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -257,7 +258,8 @@ class ModulePrepService:
                 "action": "generate",
                 "module_title": module.title,
                 "documents": documents,
-            }
+            },
+            config=graph_config(module_id),
         )
         answer = str(graph_state.get("answer", ""))
         response = ModulePrepFullResponse(
@@ -284,6 +286,7 @@ class ModulePrepService:
         draft = ModulePrepDraftResponse(
             **full_prep.model_dump(),
             updated_at=current_timestamp(),
+            thread_id=thread_id_for_module(module_id),
             revision_history=[],
         )
         write_prep_draft(draft_path, draft)
@@ -332,7 +335,8 @@ class ModulePrepService:
                 "section_id": section_id,
                 "instruction": instruction,
                 "revision_history": draft.revision_history,
-            }
+            },
+            config=graph_config(module_id),
         )
         revised_sections = [
             ModulePrepFullSection.model_validate(section)
@@ -477,6 +481,14 @@ def write_prep_draft(draft_path: Path, draft: ModulePrepDraftResponse) -> None:
 
 def current_timestamp() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def thread_id_for_module(module_id: str) -> str:
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, f"keeperkit:module-prep:{module_id}"))
+
+
+def graph_config(module_id: str) -> dict[str, dict[str, str]]:
+    return {"configurable": {"thread_id": thread_id_for_module(module_id)}}
 
 
 def make_event_title(path: Path, lines: list[str]) -> str:

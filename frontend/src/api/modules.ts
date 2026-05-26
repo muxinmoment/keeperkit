@@ -61,6 +61,8 @@ export type ModulePrepFullSection = {
 
 export type ModulePrepDraftResponse = ModulePrepFullResponse & {
   updated_at?: string | null;
+  thread_id?: string | null;
+  revision_history: Array<Record<string, string>>;
 };
 
 export type ModuleIngestResponse = {

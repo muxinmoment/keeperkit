@@ -5,6 +5,8 @@
 ## 已完成
 
 - 引入 LangGraph。
+- 接入 LangGraph `thread_id`。
+- 本地配置为 PostgreSQL checkpointer 时，备团会话状态会写入 PostgreSQL。
 - 新增备团草稿状态文件 `processed/prep_draft.json`。
 - `AI 全文备团` 会获取或创建同一个备团草稿。
 - 每个章节可以手动编辑并保存。
@@ -15,12 +17,13 @@
 
 - 不用每次重新生成整份备团。
 - 可以围绕同一个备团稿持续和 AI 协作。
+- 同一个模组会使用稳定的 `thread_id` 继续会话。
 - 你可以自己改章节，也可以让 AI 按你的要求改章节。
 - 刷新网页后，草稿仍然保存在后端模组目录里。
 
 ## 当前限制
 
-- 现在是轻量 LangGraph，状态存在文件里，不是数据库 checkpoint。
+- 当前保留文件草稿作为可读备份；LangGraph checkpoint 可使用 PostgreSQL。
 - 章节修改时只带当前章节和修改历史，不会重新读取全文 PDF。
 - 还没有展示完整修改历史。
 

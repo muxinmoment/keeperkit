@@ -7,6 +7,8 @@ python-multipart
 httpx
 openai
 langgraph
+langgraph-checkpoint-postgres
+psycopg[binary,pool]
 pytest
 pymupdf
 pymupdf4llm

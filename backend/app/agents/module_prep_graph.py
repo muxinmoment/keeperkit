@@ -2,8 +2,11 @@ from __future__ import annotations
 
 from typing import Literal, TypedDict
 
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.checkpoint.postgres import PostgresSaver
 from langgraph.graph import END, START, StateGraph
 
+from app.config import settings
 from app.rag.module_generator import ModuleGenerator
 
 
@@ -16,6 +19,9 @@ class PrepDraftGraphState(TypedDict, total=False):
     section_id: str
     instruction: str
     revision_history: list[dict[str, str]]
+
+
+_POSTGRES_CHECKPOINTER: PostgresSaver | None = None
 
 
 def create_module_prep_graph(generator: ModuleGenerator):
@@ -74,4 +80,23 @@ def create_module_prep_graph(generator: ModuleGenerator):
     )
     graph.add_edge("generate_draft", END)
     graph.add_edge("revise_section", END)
-    return graph.compile()
+    return graph.compile(checkpointer=create_checkpointer())
+
+
+def create_checkpointer():
+    if settings.langgraph_checkpointer.lower() == "postgres":
+        return get_postgres_checkpointer()
+    return MemorySaver()
+
+
+def get_postgres_checkpointer() -> PostgresSaver:
+    global _POSTGRES_CHECKPOINTER
+    if _POSTGRES_CHECKPOINTER is not None:
+        return _POSTGRES_CHECKPOINTER
+    if not settings.langgraph_postgres_uri:
+        raise ValueError("LANGGRAPH_POSTGRES_URI is required when LANGGRAPH_CHECKPOINTER=postgres.")
+    context = PostgresSaver.from_conn_string(settings.langgraph_postgres_uri)
+    saver = context.__enter__()
+    saver.setup()
+    _POSTGRES_CHECKPOINTER = saver
+    return saver

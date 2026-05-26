@@ -45,5 +45,8 @@ class Settings(BaseSettings):
     llm_api_key: str = Field(default="replace-me", alias="LLM_API_KEY")
     llm_model: str = Field(default="deepseek-chat", alias="LLM_MODEL")
 
+    langgraph_checkpointer: str = Field(default="memory", alias="LANGGRAPH_CHECKPOINTER")
+    langgraph_postgres_uri: str | None = Field(default=None, alias="LANGGRAPH_POSTGRES_URI")
+
 
 settings = Settings()

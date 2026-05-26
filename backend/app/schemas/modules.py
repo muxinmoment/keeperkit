@@ -67,6 +67,7 @@ class ModulePrepFullResponse(BaseModel):
 
 class ModulePrepDraftResponse(ModulePrepFullResponse):
     updated_at: str | None = None
+    thread_id: str | None = None
     revision_history: list[dict[str, str]] = Field(default_factory=list)
 
 
