@@ -16,6 +16,7 @@ Step 06：固定评测问题集脚本
 Step 07：BGE Reranker
 Step 08：前端接入真实问答接口
 Step 09：黑话检索改写与弱依据回答策略
+Step 10：固定后端启动环境
 ```
 
 当前可用链路：
@@ -141,6 +142,22 @@ DB -> 伤害加值、体格、力量、体型
 ```
 
 规则回答仍以检索片段为准；没有明确依据时，会先说明缺少规则书依据，再给出通用建议或提问引导。
+
+### 后端启动环境已固定
+
+当前推荐使用脚本启动后端：
+
+```powershell
+.\backend\scripts\start_backend.ps1
+```
+
+该脚本明确使用：
+
+```text
+D:\anaconda3\envs\keeperkit\python.exe
+```
+
+并默认开启 Hugging Face 离线缓存模式，避免启动时因为模型远程检查超时导致前端 `Failed to fetch`。
 
 ### 前端已接入真实问答接口
 
