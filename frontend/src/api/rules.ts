@@ -34,7 +34,7 @@ export async function askRules(request: RuleAskRequest): Promise<RuleAskResponse
   return response.json();
 }
 
-async function getErrorMessage(response: Response): Promise<string> {
+export async function getErrorMessage(response: Response): Promise<string> {
   const fallback = `Request failed: ${response.status}`;
   const contentType = response.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) {

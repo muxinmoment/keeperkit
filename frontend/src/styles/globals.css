@@ -24,6 +24,16 @@ input {
   font: inherit;
 }
 
+.workbench {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr) 340px;
+  gap: 20px;
+  width: min(1380px, calc(100vw - 32px));
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 24px 0;
+}
+
 .shell {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 360px;
@@ -35,10 +45,107 @@ input {
 }
 
 .console,
-.sources {
+.sources,
+.module-nav {
   border: 1px solid rgba(216, 196, 142, 0.24);
   background: rgba(6, 13, 11, 0.74);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+}
+
+.module-nav {
+  align-self: start;
+  padding: 18px;
+}
+
+.module-nav__header h1 {
+  font-size: 30px;
+  line-height: 1.1;
+}
+
+.module-form {
+  display: grid;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.module-form label {
+  display: grid;
+  gap: 6px;
+  color: #cdbf99;
+  font-family: "Courier New", monospace;
+  font-size: 13px;
+}
+
+.module-form input,
+.module-form button,
+.module-card,
+.ghost-button,
+.upload-button {
+  border: 1px solid rgba(216, 196, 142, 0.28);
+  color: #f0ead8;
+  background: rgba(4, 9, 8, 0.82);
+}
+
+.module-form input {
+  min-width: 0;
+  padding: 10px 12px;
+}
+
+.module-form button,
+.ghost-button,
+.upload-button {
+  min-height: 40px;
+  cursor: pointer;
+}
+
+.module-form button {
+  color: #08100d;
+  background: #d8c48e;
+}
+
+.module-list {
+  display: grid;
+  gap: 10px;
+}
+
+.module-card {
+  display: grid;
+  width: 100%;
+  gap: 5px;
+  padding: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.module-card--active {
+  border-color: #9dd6b5;
+  background: rgba(157, 214, 181, 0.1);
+}
+
+.module-card strong {
+  font-size: 16px;
+}
+
+.module-card span,
+.module-card small {
+  color: #cdbf99;
+  font-family: "Courier New", monospace;
+}
+
+.upload-button {
+  display: grid;
+  min-width: 96px;
+  padding: 10px 12px;
+  place-items: center;
+}
+
+.upload-button input {
+  display: none;
+}
+
+.ghost-button {
+  min-width: 96px;
+  padding: 10px 12px;
 }
 
 .console {
@@ -73,6 +180,12 @@ h1 {
   margin: 0;
   font-size: clamp(28px, 4vw, 52px);
   line-height: 1;
+}
+
+h2 {
+  margin: 0;
+  font-size: clamp(24px, 3vw, 42px);
+  line-height: 1.1;
 }
 
 .status {
@@ -237,6 +350,15 @@ h1 {
   color: #f0ead8;
 }
 
+.source em {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: #9dd6b5;
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  font-style: normal;
+}
+
 .source small {
   color: #cdbf99;
   line-height: 1.55;
@@ -247,6 +369,11 @@ h1 {
 }
 
 @media (max-width: 860px) {
+  .workbench {
+    grid-template-columns: 1fr;
+    padding: 16px 0;
+  }
+
   .shell {
     grid-template-columns: 1fr;
     padding: 16px 0;

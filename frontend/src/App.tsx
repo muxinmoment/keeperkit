@@ -1,5 +1,5 @@
-import { ChatPanel } from "./components/ChatPanel";
+import { ModuleWorkbench } from "./components/ModuleWorkbench";
 
 export default function App() {
-  return <ChatPanel />;
+  return <ModuleWorkbench />;
 }
