@@ -3,6 +3,7 @@ import json
 from app.schemas.modules import ModuleAskRequest
 from app.services.module_ingest_service import ModuleIngestService
 from app.services.module_qa_service import ModuleQAService
+from app.services.module_structure_service import ModuleStructureService
 from app.services.module_service import ModuleService
 
 
@@ -34,3 +35,8 @@ def test_module_ingest_and_ask_round_trip(tmp_path, monkeypatch) -> None:
     assert response.answer
     assert response.sources
     assert response.sources[0].module_id == "demo_module"
+
+    structure = ModuleStructureService(module_service).inspect("demo_module")
+    assert structure.module_id == "demo_module"
+    assert structure.groups
+    assert structure.groups[0].items

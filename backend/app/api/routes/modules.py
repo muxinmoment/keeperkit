@@ -8,16 +8,19 @@ from app.schemas.modules import (
     ModuleIngestResponse,
     ModuleSummary,
     ModuleUploadResponse,
+    ModuleStructureResponse,
 )
 from app.services.module_ingest_service import ModuleIngestService
 from app.services.module_service import ModuleService
 from app.services.module_qa_service import ModuleQAService
+from app.services.module_structure_service import ModuleStructureService
 
 
 router = APIRouter(prefix="/modules", tags=["modules"])
 service = ModuleService()
 ingest_service = ModuleIngestService(service)
 qa_service = ModuleQAService(service)
+structure_service = ModuleStructureService(service)
 
 
 @router.get("", response_model=list[ModuleSummary])
@@ -67,5 +70,13 @@ def ingest_module(module_id: str) -> ModuleIngestResponse:
 def ask_module(module_id: str, request: ModuleAskRequest) -> ModuleAskResponse:
     try:
         return qa_service.ask(module_id, request)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.get("/{module_id}/structure", response_model=ModuleStructureResponse)
+def get_module_structure(module_id: str) -> ModuleStructureResponse:
+    try:
+        return structure_service.inspect(module_id)
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc

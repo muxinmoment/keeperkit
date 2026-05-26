@@ -60,3 +60,22 @@ class ModuleUploadResponse(BaseModel):
     module_id: str
     filename: str
     path: str
+
+
+class ModuleStructureItem(BaseModel):
+    label: str
+    source: str
+    title_path: list[str] = Field(default_factory=list)
+    content_type: str
+    preview: str
+
+
+class ModuleStructureGroup(BaseModel):
+    content_type: str
+    label: str
+    items: list[ModuleStructureItem]
+
+
+class ModuleStructureResponse(BaseModel):
+    module_id: str
+    groups: list[ModuleStructureGroup]
